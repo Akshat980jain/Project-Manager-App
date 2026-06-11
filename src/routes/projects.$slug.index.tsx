@@ -307,10 +307,10 @@ function ProjectDetail() {
                     {project.scripts.map((s) => {
                       const isRunningThis = currentProcess.status === "running" || currentProcess.status === "starting";
                       return (
-                        <div key={s} className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-lg bg-zinc-900/50 border border-zinc-800/60 text-xs font-mono">
+                        <div key={s} className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-lg bg-muted/60 dark:bg-zinc-900/30 border border-border/40 dark:border-zinc-800/60 text-xs font-mono">
                           <div className="flex items-center gap-2 truncate">
                             <span className="text-primary">$</span>
-                            <span className="text-zinc-300 truncate" title={`npm run ${s}`}>npm run {s}</span>
+                            <span className="text-foreground/80 dark:text-zinc-300 truncate" title={`npm run ${s}`}>npm run {s}</span>
                           </div>
                           {!isRunningThis ? (
                             <Button
@@ -588,17 +588,17 @@ function AndroidInspector({ project }: { project: any }) {
         </div>
         
         {/* ADB Emulator Console */}
-        <div className="border border-border/30 rounded-xl p-4 bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
+        <div className="border border-border/40 dark:border-border/20 rounded-xl p-4 bg-muted/20 dark:bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
           <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider relative z-10">Device Emulator Console</div>
           <div className="flex items-center gap-2 relative z-10 my-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-zinc-300 font-mono">ADB Server Running (port 5037)</span>
+            <span className="text-xs font-semibold text-foreground/80 dark:text-zinc-300 font-mono">ADB Server Running (port 5037)</span>
           </div>
           <Button 
             size="sm"
             variant="outline"
-            className="w-full relative z-10 inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-transparent px-3 py-2 text-[10px] font-bold text-zinc-300 hover:bg-zinc-800/80 active:scale-95 transition-all cursor-pointer"
+            className="w-full relative z-10 inline-flex items-center justify-center rounded-lg border border-border dark:border-zinc-700 bg-transparent px-3 py-2 text-[10px] font-bold text-muted-foreground dark:text-zinc-300 hover:bg-accent/50 dark:hover:bg-zinc-800/80 active:scale-95 transition-all cursor-pointer"
             onClick={() => deployMutation.mutate()}
             disabled={deployMutation.isPending}
           >
@@ -608,7 +608,7 @@ function AndroidInspector({ project }: { project: any }) {
 
         {/* APK Download Card */}
         {hasApk && (
-          <div className="border border-border/30 rounded-xl p-4 bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
+          <div className="border border-border/40 dark:border-border/20 rounded-xl p-4 bg-muted/20 dark:bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent pointer-events-none" />
             <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider relative z-10">APK Distribution Node</div>
             <div className="flex items-center gap-2.5 relative z-10 my-2">
@@ -616,7 +616,7 @@ function AndroidInspector({ project }: { project: any }) {
                 <Download className="h-5 w-5" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-zinc-200">Latest Compiled Build</span>
+                <span className="text-xs font-bold text-foreground/90 dark:text-zinc-200">Latest Compiled Build</span>
                 <span className="text-[10px] text-muted-foreground font-mono">{sizeMB} MB · {formatDate(project.apkStats.updatedAt)}</span>
               </div>
             </div>
@@ -657,19 +657,19 @@ function FullStackInspector({ project }: { project: any }) {
       </div>
       
       {/* Architecture Diagram */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-5 border border-border/20 rounded-xl bg-zinc-950/30">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-5 border border-border/40 dark:border-border/20 rounded-xl bg-muted/20 dark:bg-zinc-950/30">
         <div className="px-4 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center w-36 shadow-sm">
-          <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block">Client Portal</span>
+          <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-300 uppercase tracking-wider block">Client Portal</span>
           <span className="text-[9px] text-muted-foreground font-mono mt-0.5 block">{clientSub}</span>
         </div>
-        <div className="text-zinc-600 font-black text-sm select-none rotate-90 sm:rotate-0">──▶</div>
+        <div className="text-muted-foreground/60 dark:text-zinc-600 font-black text-sm select-none rotate-90 sm:rotate-0">──▶</div>
         <div className="px-4 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center w-36 shadow-sm">
-          <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block">{apiLabel}</span>
+          <span className="text-[10px] font-bold text-purple-400 dark:text-purple-300 uppercase tracking-wider block">{apiLabel}</span>
           <span className="text-[9px] text-muted-foreground font-mono mt-0.5 block">{apiSub}</span>
         </div>
-        <div className="text-zinc-600 font-black text-sm select-none rotate-90 sm:rotate-0">──▶</div>
+        <div className="text-muted-foreground/60 dark:text-zinc-600 font-black text-sm select-none rotate-90 sm:rotate-0">──▶</div>
         <div className="px-4 py-2.5 rounded-xl bg-teal-500/10 border border-teal-500/20 text-center w-36 shadow-sm">
-          <span className="text-[10px] font-bold text-teal-400 uppercase tracking-wider block">Database Store</span>
+          <span className="text-[10px] font-bold text-teal-400 dark:text-teal-300 uppercase tracking-wider block">Database Store</span>
           <span className="text-[9px] text-muted-foreground font-mono mt-0.5 block">{dbSub}</span>
         </div>
       </div>
@@ -703,14 +703,14 @@ function Web3Inspector({ project }: { project: any }) {
             <span className="font-semibold text-emerald-400 font-mono">Passed (12 checks)</span>
           </div>
         </div>
-        <div className="border border-border/30 rounded-xl p-4 bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
+        <div className="border border-border/40 dark:border-border/20 rounded-xl p-4 bg-muted/20 dark:bg-zinc-950/40 flex flex-col justify-between h-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent pointer-events-none" />
           <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider relative z-10">Dev Chain Status</div>
           <div className="flex items-center gap-2 relative z-10 my-2">
             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-xs font-semibold text-zinc-300 font-mono">Hardhat Node Ready (Network ID: 31337)</span>
+            <span className="text-xs font-semibold text-foreground/80 dark:text-zinc-300 font-mono">Hardhat Node Ready (Network ID: 31337)</span>
           </div>
-          <button className="w-full relative z-10 inline-flex items-center justify-center rounded-lg border border-zinc-700 bg-transparent px-3 py-2 text-[10px] font-bold text-zinc-300 hover:bg-zinc-800/80 active:scale-95 transition-all">
+          <button className="w-full relative z-10 inline-flex items-center justify-center rounded-lg border border-border dark:border-zinc-700 bg-transparent px-3 py-2 text-[10px] font-bold text-muted-foreground dark:text-zinc-300 hover:bg-accent/50 dark:hover:bg-zinc-800/80 active:scale-95 transition-all">
             Run Local Gas Profiler
           </button>
         </div>
@@ -844,20 +844,20 @@ function GitCommitTimeline({ projectDir }: { projectDir: string }) {
               </div>
 
               {/* Commit Content Box */}
-              <div className="glass border border-border/20 group-hover:border-primary/30 rounded-xl p-4 transition-all duration-200 bg-zinc-900/20 group-hover:bg-zinc-900/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="glass border border-border/20 group-hover:border-primary/30 rounded-xl p-4 transition-all duration-200 bg-muted/30 dark:bg-zinc-900/20 group-hover:bg-muted/50 dark:group-hover:bg-zinc-900/40 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="space-y-1.5 relative z-10">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-bold text-zinc-100 group-hover:text-primary transition-colors leading-tight">
+                    <span className="text-xs font-bold text-foreground/90 dark:text-zinc-100 group-hover:text-primary transition-colors leading-tight">
                       {commit.message}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
                     <span className="flex items-center gap-1">
-                      <span className="w-4 h-4 rounded-full bg-zinc-700 flex items-center justify-center text-[8px] font-black uppercase text-zinc-300">
+                      <span className="w-4 h-4 rounded-full bg-muted/80 dark:bg-zinc-700 flex items-center justify-center text-[8px] font-black uppercase text-muted-foreground dark:text-zinc-300">
                         {commit.authorName.charAt(0)}
                       </span>
-                      <span className="font-semibold text-zinc-300">{commit.authorName}</span>
+                      <span className="font-semibold text-foreground/80 dark:text-zinc-300">{commit.authorName}</span>
                     </span>
                     <span>·</span>
                     <span>{commit.date}</span>
@@ -865,7 +865,7 @@ function GitCommitTimeline({ projectDir }: { projectDir: string }) {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0 relative z-10">
-                  <span className="text-[10px] font-mono font-black text-zinc-300 uppercase bg-zinc-950/60 px-2.5 py-1 rounded-md border border-border/40">
+                  <span className="text-[10px] font-mono font-black text-muted-foreground dark:text-zinc-300 uppercase bg-muted/60 dark:bg-zinc-950/60 px-2.5 py-1 rounded-md border border-border/40">
                     {commit.shortHash}
                   </span>
                 </div>
