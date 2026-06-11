@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevEngine — Developer Control Panel</title>
+    <meta name="description" content="Manage all your personal projects from a single beautiful dashboard." />
+    <meta name="theme-color" content="#0d1117" />
+    <script>
+      // Avoid theme flash on first paint
+      (function() {
+        try {
+          var t = localStorage.getItem('ph-theme');
+          var d = t ? t === 'dark' : true;
+          document.documentElement.classList.toggle('dark', d);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen bg-background text-foreground antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

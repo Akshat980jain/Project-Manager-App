@@ -1,16 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@/hooks/use-query";
 import { AppShell } from "@/components/AppShell";
 import { ProjectCard, type ProjectCardData } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/categories/$slug")({
-  head: ({ params }) => ({ meta: [{ title: `${params.slug} — Categories` }] }),
-  component: CatPage,
-});
-
 function CatPage() {
-  const { slug } = Route.useParams();
+  const { slug } = useParams<{ slug: string }>();
   const { data } = useQuery({
     queryKey: ["cat", slug],
     queryFn: async () => {
@@ -37,3 +32,5 @@ function CatPage() {
     </AppShell>
   );
 }
+
+export default CatPage;

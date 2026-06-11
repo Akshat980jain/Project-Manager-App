@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import {
   AreaChart,
@@ -26,15 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/analytics")({
-  head: () => ({
-    meta: [
-      { title: "Fleet Analytics — DevEngine" },
-      { name: "description", content: "Platform-wide aggregated telemetry and infrastructure cost allocations." },
-    ],
-  }),
-  component: AnalyticsDashboardPage,
-});
+
 
 // Telemetry mock data for Traffic Volume Area Chart
 const trafficData = [
@@ -318,3 +309,5 @@ function AnalyticsDashboardPage() {
     </AppShell>
   );
 }
+
+export default AnalyticsDashboardPage;

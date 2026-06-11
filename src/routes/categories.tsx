@@ -1,14 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery } from "@/hooks/use-query";
 import { AppShell } from "@/components/AppShell";
 import { ProjectCard, type ProjectCardData } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { Tags } from "lucide-react";
-
-export const Route = createFileRoute("/categories")({
-  head: () => ({ meta: [{ title: "Categories — ProjectHub" }] }),
-  component: CategoriesIndex,
-});
 
 async function fetchCats() {
   const [{ data: cats }, { data: projects }] = await Promise.all([
@@ -33,8 +28,7 @@ function CategoriesIndex() {
           {data?.map((c) => (
             <Link
               key={c.id}
-              to="/categories/$slug"
-              params={{ slug: c.slug }}
+              to={`/categories/${c.slug}`}
               className="rounded-xl border border-border bg-card p-4 hover:border-primary/50 transition"
             >
               <div className="flex items-center gap-3">
@@ -53,3 +47,5 @@ function CategoriesIndex() {
     </AppShell>
   );
 }
+
+export default CategoriesIndex;

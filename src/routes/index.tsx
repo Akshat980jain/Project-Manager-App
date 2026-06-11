@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@/hooks/use-query";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -21,16 +21,6 @@ import {
   AlertTriangle,
   X,
 } from "lucide-react";
-
-export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "DevEngine — Fleet Console" },
-      { name: "description", content: "Manage your local repository workspace and active codebase microservices." },
-    ],
-  }),
-  component: DynamicGridDashboard,
-});
 
 // Mapping discovered project directories to custom icons/logos
 function getProjectLogoSpec(dirName: string, idx: number) {
@@ -183,8 +173,7 @@ function DynamicGridDashboard() {
               return (
                 <Link
                   key={project.id}
-                  to="/projects/$slug"
-                  params={{ slug: project.dirName }}
+                  to={`/projects/${project.id}`}
                   className="group relative flex flex-col items-center justify-center gap-3 py-5 rounded-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden"
                 >
                   {/* Hover gradient wash */}
@@ -386,3 +375,5 @@ function DynamicGridDashboard() {
     </AppShell>
   );
 }
+
+export default DynamicGridDashboard;

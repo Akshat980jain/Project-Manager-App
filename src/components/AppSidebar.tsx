@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -9,9 +9,8 @@ import {
   LogOut,
   Sun,
   Moon,
-  Github,
-  HelpCircle,
   BookOpen,
+  HelpCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,7 +32,10 @@ import { Button } from "@/components/ui/button";
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const location = useLocation();
+  const pathname = location.pathname;
+  const [searchParams] = useSearchParams();
+  const searchTab = searchParams.get("tab");
   const { user } = useAuth();
   const { theme, toggle } = useTheme();
 
@@ -85,42 +87,34 @@ export function AppSidebar() {
 
   const logoPath = getSidebarLogo(slug);
 
-  const routerState = useRouterState();
-  const searchTab = (routerState.location.search as any)?.tab;
-
   const items = [
     {
       title: "Overview",
-      to: "/projects/$slug" as const,
-      search: { tab: "overview" as const },
-      params: { slug },
+      to: `/projects/${slug}?tab=overview`,
       icon: LayoutDashboard,
       isActive: pathname === `/projects/${slug}` && (!searchTab || searchTab === "overview"),
     },
     {
       title: "Repository",
-      to: "/projects/$slug" as const,
-      search: { tab: "repository" as const },
-      params: { slug },
+      to: `/projects/${slug}?tab=repository`,
       icon: FolderKanban,
       isActive: pathname === `/projects/${slug}` && searchTab === "repository",
     },
     {
       title: "Pipelines",
-      to: "/projects/$slug/pipeline" as const,
-      params: { slug },
+      to: `/projects/${slug}/pipeline`,
       icon: Rocket,
       isActive: pathname === `/projects/${slug}/pipeline`,
     },
     {
       title: "Security",
-      to: "/settings/security" as const,
+      to: "/settings/security",
       icon: Shield,
       isActive: pathname === "/settings/security",
     },
     {
       title: "Monitoring",
-      to: "/admin/audit-log" as const,
+      to: "/admin/audit-log",
       icon: Activity,
       isActive: pathname === "/admin/audit-log",
     },
@@ -173,8 +167,6 @@ export function AppSidebar() {
                     >
                       <Link
                         to={item.to}
-                        search={"search" in item ? item.search : undefined}
-                        params={"params" in item ? item.params : undefined}
                         className="flex items-center w-full h-full"
                       >
                         <item.icon className="h-5 w-5 shrink-0" />

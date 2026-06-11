@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery } from "@/hooks/use-query";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ProjectCard, type ProjectCardData } from "@/components/ProjectCard";
@@ -8,16 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { STATUS_LABEL, type ProjectStatus } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-export const Route = createFileRoute("/projects/")({
-  head: () => ({
-    meta: [
-      { title: "All Projects — ProjectHub" },
-      { name: "description", content: "Browse, search, and filter all your projects." },
-    ],
-  }),
-  component: ProjectsPage,
-});
 
 async function fetchAll() {
   const [{ data: projects }, { data: categories }] = await Promise.all([
@@ -100,19 +90,21 @@ function ProjectsPage() {
   );
 }
 
-function Pill({ active, accent, onClick, children }: { active: boolean; accent?: string; onClick: () => void; children: React.ReactNode }) {
+export default ProjectsPage;
+
+      function Pill({active, accent, onClick, children}: {active: boolean; accent?: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-3 py-1 rounded-full text-xs border transition",
-        active
-          ? "bg-primary text-primary-foreground border-primary"
-          : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-      )}
-      style={active && accent ? { background: accent, borderColor: accent, color: "#0d1117" } : undefined}
-    >
-      {children}
-    </button>
-  );
+      <button
+        onClick={onClick}
+        className={cn(
+          "px-3 py-1 rounded-full text-xs border transition",
+          active
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
+        )}
+        style={active && accent ? { background: accent, borderColor: accent, color: "#0d1117" } : undefined}
+      >
+        {children}
+      </button>
+      );
 }

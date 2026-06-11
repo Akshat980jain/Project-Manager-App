@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@/hooks/use-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,8 @@ import { toast } from "sonner";
 import { Trash2, Upload as UploadIcon, Download } from "lucide-react";
 import { bytesFmt } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/projects/$slug")({
-  component: EditProject,
-});
-
 function EditProject() {
-  const { slug } = Route.useParams();
+  const { slug } = useParams<{ slug: string }>();
   const qc = useQueryClient();
   const { data, refetch } = useQuery({
     queryKey: ["admin-project", slug],
@@ -62,7 +58,7 @@ function EditProject() {
     const { error } = await supabase.storage.from("project-files").upload(path, f);
     if (error) { toast.error(error.message); return; }
     const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-    const kind = ext === "zip" ? "zip" : ["pdf"].includes(ext) ? "pdf" : ["doc","docx"].includes(ext) ? "doc" : ["ppt","pptx"].includes(ext) ? "ppt" : ["png","jpg","jpeg","gif","webp"].includes(ext) ? "image" : "other";
+    const kind = ext === "zip" ? "zip" : ["pdf"].includes(ext) ? "pdf" : ["doc", "docx"].includes(ext) ? "doc" : ["ppt", "pptx"].includes(ext) ? "ppt" : ["png", "jpg", "jpeg", "gif", "webp"].includes(ext) ? "image" : "other";
     await supabase.from("project_files").insert({ project_id: project.id, storage_path: path, label: f.name, kind, size_bytes: f.size });
     toast.success("File uploaded");
     refetch();
@@ -119,7 +115,7 @@ function EditProject() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Edit: {project.name}</h1>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm"><Link to="/projects/$slug" params={{ slug }}>View</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link to={`/projects/${slug}`}>View</Link></Button>
           <Button onClick={deleteProject} variant="destructive" size="sm"><Trash2 className="h-3 w-3 mr-1" />Delete</Button>
         </div>
       </div>
@@ -236,7 +232,7 @@ function DocsEditor({ initial, onSave }: { initial: any; onSave: (f: any) => Pro
   return (
     <section className="rounded-xl border border-border bg-card p-4 space-y-3">
       <h2 className="font-semibold">Documentation</h2>
-      {(["notes","research","requirements","documentation"] as const).map((k) => (
+      {(["notes", "research", "requirements", "documentation"] as const).map((k) => (
         <div key={k}>
           <Label className="capitalize">{k}</Label>
           <Textarea rows={4} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
@@ -246,3 +242,5 @@ function DocsEditor({ initial, onSave }: { initial: any; onSave: (f: any) => Pro
     </section>
   );
 }
+
+export default EditProject;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@/hooks/use-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CommandDialog,
@@ -12,7 +12,7 @@ import {
   CommandShortcut,
   CommandSeparator,
 } from "@/components/ui/command";
-import { LayoutDashboard, Folder, Rocket, Shield, Settings, Users, Key } from "lucide-react";
+import { LayoutDashboard, Folder, Rocket, Shield, Key, Users } from "lucide-react";
 
 export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
   const navigate = useNavigate();
@@ -46,7 +46,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
             {projects.map((project) => (
               <CommandItem
                 key={project.id}
-                onSelect={() => handleSelect(() => navigate({ to: `/projects/${project.slug}` }))}
+                onSelect={() => handleSelect(() => navigate(`/projects/${project.slug}`))}
                 className="flex items-center gap-3 px-3 py-2 cursor-pointer"
               >
                 <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-primary shrink-0">
@@ -66,7 +66,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
         
         <CommandGroup heading="Common Actions">
           <CommandItem
-            onSelect={() => handleSelect(() => navigate({ to: "/admin/projects/new" }))}
+            onSelect={() => handleSelect(() => navigate("/admin/projects/new"))}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
@@ -75,7 +75,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
             <span className="text-sm">Trigger New Deploy / Project</span>
           </CommandItem>
           <CommandItem
-            onSelect={() => handleSelect(() => navigate({ to: "/settings/security" }))}
+            onSelect={() => handleSelect(() => navigate("/settings/security"))}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
@@ -89,7 +89,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
         
         <CommandGroup heading="Navigation">
           <CommandItem
-            onSelect={() => handleSelect(() => navigate({ to: "/" }))}
+            onSelect={() => handleSelect(() => navigate("/"))}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
@@ -98,7 +98,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
             <span className="text-sm">Go to Projects Board</span>
           </CommandItem>
           <CommandItem
-            onSelect={() => handleSelect(() => navigate({ to: "/team" }))}
+            onSelect={() => handleSelect(() => navigate("/team"))}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
@@ -107,7 +107,7 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (ope
             <span className="text-sm">Go to Teams</span>
           </CommandItem>
           <CommandItem
-            onSelect={() => handleSelect(() => navigate({ to: "/analytics" }))}
+            onSelect={() => handleSelect(() => navigate("/analytics"))}
             className="flex items-center gap-3 px-3 py-2 cursor-pointer"
           >
             <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">

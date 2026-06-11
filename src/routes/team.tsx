@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/team")({
-  head: () => ({
-    meta: [
-      { title: "Team Collaboration — DevEngine" },
-      { name: "description", content: "Manage member authorizations, active sprint tasks, and access credentials." },
-    ],
-  }),
-  component: TeamCollaborationPage,
-});
+import { useState } from "react";
 
 function TeamCollaborationPage() {
   const [inviteEmail, setInviteEmail] = useState("");
@@ -71,11 +61,11 @@ function TeamCollaborationPage() {
   const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteEmail.trim()) return;
-    
+
     const initials = inviteEmail.substring(0, 2).toUpperCase();
     const name = inviteEmail.split("@")[0].replace(".", " ");
     const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
-    
+
     setMembers((prev) => [
       ...prev,
       {
@@ -91,7 +81,7 @@ function TeamCollaborationPage() {
         deploy: inviteRole === "Team Lead",
       },
     ]);
-    
+
     setInviteEmail("");
     toast.success(`Invite sent successfully to ${inviteEmail}!`);
   };
@@ -119,7 +109,7 @@ function TeamCollaborationPage() {
   return (
     <AppShell>
       <div className="px-6 md:px-12 py-10 max-w-7xl 3xl:max-w-[1700px] 4xl:max-w-[2100px] 5xl:max-w-[2500px] 6xl:max-w-[3100px] 4k:max-w-[3600px] w-full mx-auto space-y-8 animate-fade-in">
-        
+
         {/* Page Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border/40 pb-6">
           <div>
@@ -132,7 +122,7 @@ function TeamCollaborationPage() {
 
         {/* Layout Row (Members Access & Invite Form) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column: Member Permissions Matrix */}
           <div className="lg:col-span-9 border border-border/40 rounded-xl bg-card shadow-[0_4px_12px_rgba(0,0,0,0.01)] overflow-hidden">
             <div className="flex justify-between items-center p-5 border-b border-border/40 bg-muted/20">
@@ -174,11 +164,10 @@ function TeamCollaborationPage() {
 
                       {/* Custom Role Badge */}
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                          mem.role === "Team Lead" 
-                            ? "bg-violet-50 text-violet-600 border-violet-200/50" 
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${mem.role === "Team Lead"
+                            ? "bg-violet-50 text-violet-600 border-violet-200/50"
                             : "bg-blue-50 text-blue-600 border-blue-200/50"
-                        }`}>
+                          }`}>
                           <Shield className="h-3 w-3" />
                           {mem.role}
                         </span>
@@ -194,11 +183,10 @@ function TeamCollaborationPage() {
 
                       {/* Pulsating status */}
                       <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider uppercase ${
-                          mem.status === "Online"
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border tracking-wider uppercase ${mem.status === "Online"
                             ? "bg-emerald-50 text-emerald-600 border-emerald-200/50"
                             : "bg-zinc-100 text-zinc-600 border-zinc-200/50"
-                        }`}>
+                          }`}>
                           {mem.status === "Online" && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />}
                           {mem.status}
                         </span>
@@ -290,3 +278,5 @@ function TeamCollaborationPage() {
     </AppShell>
   );
 }
+
+export default TeamCollaborationPage;

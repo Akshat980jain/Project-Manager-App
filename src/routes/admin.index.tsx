@@ -1,13 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useQuery } from "@/hooks/use-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { formatDate } from "@/lib/format";
-
-export const Route = createFileRoute("/admin/")({
-  component: AdminHome,
-});
 
 function AdminHome() {
   const { data } = useQuery({
@@ -29,7 +25,7 @@ function AdminHome() {
       </div>
       <div className="rounded-xl border border-border bg-card divide-y divide-border">
         {(data ?? []).map((p) => (
-          <Link key={p.id} to="/admin/projects/$slug" params={{ slug: p.slug }} className="flex items-center justify-between p-3 hover:bg-accent">
+          <Link key={p.id} to={`/admin/projects/${p.slug}`} className="flex items-center justify-between p-3 hover:bg-accent">
             <div>
               <div className="font-medium">{p.name}</div>
               <div className="text-xs text-muted-foreground">{p.status} · {formatDate(p.updated_at)}</div>
@@ -41,3 +37,5 @@ function AdminHome() {
     </div>
   );
 }
+
+export default AdminHome;

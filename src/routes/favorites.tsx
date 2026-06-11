@@ -1,14 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@/hooks/use-query";
 import { AppShell } from "@/components/AppShell";
 import { ProjectCard, type ProjectCardData } from "@/components/ProjectCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-
-export const Route = createFileRoute("/favorites")({
-  head: () => ({ meta: [{ title: "Favorites — ProjectHub" }] }),
-  component: FavPage,
-});
 
 function FavPage() {
   const { user } = useAuth();
@@ -37,3 +31,5 @@ function FavPage() {
     </AppShell>
   );
 }
+
+export default FavPage;

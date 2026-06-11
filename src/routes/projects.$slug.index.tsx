@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@/hooks/use-query";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { getFileTree, getFileContent, getProjectDetail, getGitHistory, type FileNode } from "@/lib/api/explorer.functions";
@@ -36,23 +36,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-import { z } from "zod";
-
-const searchSchema = z.object({
-  tab: z.enum(["overview", "repository", "readme"]).optional().catch("overview"),
-});
-
-export const Route = createFileRoute("/projects/$slug/")({
-  validateSearch: (search) => searchSchema.parse(search),
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.slug} — DevEngine` },
-      { name: "description", content: `Project details and codebase explorer for ${params.slug}.` },
-    ],
-  }),
-  component: ProjectDetail,
-});
-
 // Brand name overrides: maps real folder names to display names
 const DIR_DISPLAY_NAMES: Record<string, string> = {
   "EMS": "StaffSphere",
@@ -65,9 +48,9 @@ function getDirDisplayName(dirName: string): string {
 }
 
 function ProjectDetail() {
-  const { slug } = Route.useParams();
-  const { tab } = Route.useSearch();
-  const navigate = Route.useNavigate();
+  const { slug } = useParams<{ slug: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "overview";
 
   const queryClient = useQueryClient();
 
@@ -280,7 +263,7 @@ function ProjectDetail() {
         </div>
 
         {/* Main Tab Content */}
-        <Tabs value={tab} onValueChange={(val) => navigate({ search: { tab: val as any } })} className="space-y-6">
+        <Tabs value={tab} onValueChange={(val) => setSearchParams({ tab: val })} className="space-y-6">
           <TabsList className="flex flex-wrap h-auto gap-1 border-b border-border/40 bg-transparent p-0 rounded-none w-full justify-start">
             <TabsTrigger value="overview" className="px-4 py-2 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">Overview</TabsTrigger>
             <TabsTrigger value="repository" className="px-4 py-2 border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none">Repository Explorer</TabsTrigger>
@@ -898,3 +881,5 @@ function GitCommitTimeline({ projectDir }: { projectDir: string }) {
     </div>
   );
 }
+
+export default ProjectDetail;

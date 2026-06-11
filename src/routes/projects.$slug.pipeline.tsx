@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { createFileRoute, useParams, Link } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams, Link } from "react-router-dom";
+import { useMutation, useQueryClient } from "@/hooks/use-query";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { streamLogs, stopDevServer, startDevServer } from "@/lib/api/processes";
@@ -21,20 +21,10 @@ import {
   Activity,
 } from "lucide-react";
 
-export const Route = createFileRoute("/projects/$slug/pipeline")({
-  head: () => ({
-    meta: [
-      { title: "Deployment Pipeline — DevEngine" },
-      { name: "description", content: "Active build status and compiler log streaming." },
-    ],
-  }),
-  component: ProjectPipelinePage,
-});
-
 function ProjectPipelinePage() {
-  const { slug } = useParams({ from: "/projects/$slug/pipeline" });
+  const { slug } = useParams<{ slug: string }>();
   const terminalEndRef = useRef<HTMLDivElement>(null);
-  
+
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
@@ -100,11 +90,11 @@ function ProjectPipelinePage() {
 
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
-          
+
           if (buffer.includes("\n")) {
             const lines = buffer.split("\n");
             buffer = lines.pop() ?? ""; // Store trailing characters
-            
+
             // Filter keep-alive heartbeat pings (empty lines)
             const filteredLines = lines.filter(line => line.trim() !== "");
             if (filteredLines.length > 0) {
@@ -128,7 +118,7 @@ function ProjectPipelinePage() {
     return () => {
       active = false;
       if (reader) {
-        reader.cancel().catch(() => {});
+        reader.cancel().catch(() => { });
       }
     };
   }, [slug]);
@@ -238,7 +228,7 @@ function ProjectPipelinePage() {
 
         {/* Pipeline Flow & Terminal (Bento Grid) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
+
           {/* Left Column: Execution flowchart */}
           <div className="lg:col-span-5 border border-border/40 rounded-xl bg-card p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
@@ -252,7 +242,7 @@ function ProjectPipelinePage() {
             <div className="relative pl-6 space-y-8">
               {/* Connecting line */}
               <div className="absolute left-[13px] top-3 bottom-5 w-0.5 bg-border/40 rounded-full" />
-              
+
               {/* Stage 1: Success */}
               <div className="relative flex gap-4">
                 <div className="absolute left-[-21px] z-10 w-4 h-4 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow">
@@ -290,9 +280,8 @@ function ProjectPipelinePage() {
                     <CheckCircle2 className="h-4 w-4 text-primary fill-primary-foreground" />
                   )}
                 </div>
-                <div className={`flex-1 p-3 rounded-lg border transition-all ${
-                  isRunning ? "bg-primary-container/10 border-primary/20" : "bg-card border-border/80"
-                }`}>
+                <div className={`flex-1 p-3 rounded-lg border transition-all ${isRunning ? "bg-primary-container/10 border-primary/20" : "bg-card border-border/80"
+                  }`}>
                   <div className="flex justify-between items-center text-sm font-semibold">
                     <span className={isRunning ? "text-primary" : "text-foreground"}>Building Artifacts</span>
                     <span className={`text-[10px] ${isRunning ? "text-primary" : "text-muted-foreground"} font-mono`}>
@@ -300,7 +289,7 @@ function ProjectPipelinePage() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Compiling assets and building Docker container.</p>
-                  
+
                   {isRunning && (
                     <div className="mt-3 bg-zinc-950 text-emerald-400 p-2.5 rounded font-mono text-[10px] select-none border border-zinc-800">
                       <div className="opacity-60 truncate">[Webpack] Emitting chunks...</div>
@@ -312,9 +301,8 @@ function ProjectPipelinePage() {
 
               {/* Stage 4: Pending / Done */}
               <div className="relative flex gap-4">
-                <div className={`absolute left-[-21px] z-10 w-4 h-4 rounded-full border-2 flex items-center justify-center shadow ${
-                  isRunning ? "bg-card border-border/80 text-muted-foreground" : "bg-primary border-primary text-primary-foreground"
-                }`}>
+                <div className={`absolute left-[-21px] z-10 w-4 h-4 rounded-full border-2 flex items-center justify-center shadow ${isRunning ? "bg-card border-border/80 text-muted-foreground" : "bg-primary border-primary text-primary-foreground"
+                  }`}>
                   {!isRunning && <CheckCircle2 className="h-4 w-4" />}
                 </div>
                 <div className={`flex-1 ${isRunning ? "opacity-50" : ""}`}>
@@ -330,9 +318,8 @@ function ProjectPipelinePage() {
 
               {/* Stage 5: Pending / Done */}
               <div className="relative flex gap-4">
-                <div className={`absolute left-[-21px] z-10 w-4 h-4 rounded-full border-2 flex items-center justify-center shadow ${
-                  isRunning ? "bg-card border-border/80 text-muted-foreground" : "bg-primary border-primary text-primary-foreground"
-                }`}>
+                <div className={`absolute left-[-21px] z-10 w-4 h-4 rounded-full border-2 flex items-center justify-center shadow ${isRunning ? "bg-card border-border/80 text-muted-foreground" : "bg-primary border-primary text-primary-foreground"
+                  }`}>
                   {!isRunning && <CheckCircle2 className="h-4 w-4" />}
                 </div>
                 <div className={`flex-1 ${isRunning ? "opacity-50" : ""}`}>
@@ -385,14 +372,14 @@ function ProjectPipelinePage() {
                 } else if (log.startsWith(">")) {
                   colorClass = "text-zinc-100 font-bold";
                 }
-                
+
                 return (
                   <div key={index} className={`mb-1 ${colorClass}`}>
                     {log}
                   </div>
                 );
               })}
-              
+
               {/* Blinking cursor */}
               {isRunning && (
                 <span className="inline-block w-2.5 h-4 bg-primary ml-1 animate-[pulse_1s_infinite]" />
@@ -405,3 +392,5 @@ function ProjectPipelinePage() {
     </AppShell>
   );
 }
+
+export default ProjectPipelinePage;

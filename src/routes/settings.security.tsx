@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/settings/security")({
-  head: () => ({
-    meta: [
-      { title: "Integrations & Security — DevEngine" },
-      { name: "description", content: "Manage webhooks, rotate API credentials, and connect third-party integrations." },
-    ],
-  }),
-  component: SecuritySettingsPage,
-});
+import { useState } from "react";
 
 function SecuritySettingsPage() {
   const [apiKey, setApiKey] = useState("de_live_9a8b7c6d5e4f3g2h1i0j_prod");
@@ -64,7 +54,7 @@ function SecuritySettingsPage() {
   return (
     <AppShell>
       <div className="px-6 md:px-12 py-10 max-w-5xl mx-auto space-y-8 animate-fade-in">
-        
+
         {/* Page Header */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border/40 pb-6">
           <div>
@@ -77,18 +67,18 @@ function SecuritySettingsPage() {
 
         {/* Bento Layout Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
+
           {/* Integrations Grid Cards */}
           <div className="md:col-span-2 space-y-6">
-            
+
             {/* Service connections */}
             <div className="border border-border/40 rounded-xl p-6 bg-card shadow-[0_4px_12px_rgba(0,0,0,0.01)] space-y-4">
               <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
                 <Globe className="h-5 w-5 text-primary" /> Third-Party Integrations
               </h3>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* GitHub */}
                 <div className="border border-border/60 rounded-xl p-4 flex items-center justify-between bg-background hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-3">
@@ -186,13 +176,13 @@ function SecuritySettingsPage() {
 
           {/* Right Column: Credentials & Rotation */}
           <div className="space-y-6">
-            
+
             {/* Credentials Card */}
             <div className="border border-border/40 rounded-xl p-6 bg-card shadow-[0_4px_12px_rgba(0,0,0,0.01)] space-y-4">
               <h3 className="font-bold text-base text-foreground flex items-center gap-2">
                 <Key className="h-4 w-4 text-primary" /> API Key Credentials
               </h3>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Live Token</span>
@@ -247,3 +237,5 @@ function SecuritySettingsPage() {
     </AppShell>
   );
 }
+
+export default SecuritySettingsPage;

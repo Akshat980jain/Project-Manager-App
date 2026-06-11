@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Search } from "lucide-react";
@@ -11,7 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const location = useLocation();
+  const pathname = location.pathname;
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Bind keydown listeners for Ctrl+K / Cmd+K

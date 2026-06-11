@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -9,11 +9,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Terminal, Shield, KeyRound, Play, Sparkles } from "lucide-react";
 
-export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — DevEngine" }] }),
-  component: LoginPage,
-});
-
 function LoginPage() {
   const { user } = useAuth();
   const nav = useNavigate();
@@ -22,7 +17,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (user) nav({ to: "/", replace: true }); }, [user, nav]);
+  useEffect(() => { if (user) nav("/", { replace: true }); }, [user, nav]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -218,3 +213,5 @@ function LoginPage() {
     </AppShell>
   );
 }
+
+export default LoginPage;

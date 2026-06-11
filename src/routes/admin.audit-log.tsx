@@ -1,5 +1,3 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +14,7 @@ import {
   Calendar,
 } from "lucide-react";
 
-export const Route = createFileRoute("/admin/audit-log")({
-  head: () => ({
-    meta: [
-      { title: "Activity Audit Log — DevEngine" },
-      { name: "description", content: "Platform-wide timeline of system events and configuration changes." },
-    ],
-  }),
-  component: ActivityAuditLogPage,
-});
+import { useState } from "react";
 
 // Telemetry mock audit entries
 const INITIAL_EVENTS = [
@@ -70,7 +60,7 @@ function ActivityAuditLogPage() {
   const [search, setSearch] = useState("");
   const [projectFilter, setProjectFilter] = useState("All Projects");
   const [dateRange, setDateRange] = useState("Last 24 Hours");
-  
+
   const [filterTypes, setFilterTypes] = useState({
     Deployments: true,
     Configuration: true,
@@ -91,7 +81,7 @@ function ActivityAuditLogPage() {
       evt.authorName.toLowerCase().includes(search.toLowerCase()) ||
       evt.action.toLowerCase().includes(search.toLowerCase()) ||
       evt.description.toLowerCase().includes(search.toLowerCase());
-      
+
     // Type checkbox filter
     const matchesType = (filterTypes as any)[evt.type];
 
@@ -101,7 +91,7 @@ function ActivityAuditLogPage() {
   return (
     <AppShell>
       <div className="px-6 md:px-12 py-10 max-w-7xl 3xl:max-w-[1700px] 4xl:max-w-[2100px] 5xl:max-w-[2500px] 6xl:max-w-[3100px] 4k:max-w-[3600px] w-full mx-auto space-y-8 animate-fade-in">
-        
+
         {/* Page Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/40 pb-6">
           <div>
@@ -117,14 +107,14 @@ function ActivityAuditLogPage() {
 
         {/* Sidebar & Timeline Bento Row */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column: Sidebar Filters Panel */}
           <aside className="lg:col-span-3">
             <div className="bg-card border border-border/60 rounded-xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.01)] space-y-6 sticky top-20">
               <h3 className="font-bold text-base text-foreground border-b border-border/40 pb-3 flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" /> Filters
               </h3>
-              
+
               <div className="space-y-5">
                 {/* Search query */}
                 <div className="space-y-2">
@@ -250,7 +240,7 @@ function ActivityAuditLogPage() {
                           </div>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{evt.description}</p>
-                        
+
                         {/* Interactive Accordion Spec expander */}
                         <details className="group/details pt-1">
                           <summary className="list-none cursor-pointer inline-flex items-center gap-1 text-xs font-bold text-primary hover:opacity-80 select-none">
@@ -286,3 +276,5 @@ function ActivityAuditLogPage() {
     </AppShell>
   );
 }
+
+export default ActivityAuditLogPage;

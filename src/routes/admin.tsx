@@ -1,12 +1,7 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import { Link, Outlet } from "react-router-dom";
 import { AppShell } from "@/components/AppShell";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-
-export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — ProjectHub" }] }),
-  component: AdminLayout,
-});
 
 function AdminLayout() {
   const { user, isAdmin, loading } = useAuth();
@@ -26,3 +21,5 @@ function AdminLayout() {
     </AppShell>
   );
 }
+
+export default AdminLayout;

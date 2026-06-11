@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { getIcon } from "@/lib/icons";
 import { STATUS_CLASS, STATUS_LABEL, formatDate, type ProjectStatus } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +19,7 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
   const Icon = getIcon(project.icon);
   return (
     <Link
-      to="/projects/$slug"
-      params={{ slug: project.slug }}
+      to={`/projects/${project.slug}`}
       className="group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
     >
       <div className="flex items-start justify-between">

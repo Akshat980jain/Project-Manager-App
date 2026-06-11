@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { formatDate } from "@/lib/format";
 
 type Notification = {

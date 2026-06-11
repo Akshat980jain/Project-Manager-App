@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@/hooks/use-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,10 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ICON_NAMES, getIcon } from "@/lib/icons";
 import { slugify } from "@/lib/format";
 import { toast } from "sonner";
-
-export const Route = createFileRoute("/admin/projects/new")({
-  component: NewProject,
-});
 
 function NewProject() {
   const nav = useNavigate();
@@ -43,7 +39,7 @@ function NewProject() {
     setSaving(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Project created");
-    nav({ to: "/admin/projects/$slug", params: { slug } });
+    nav(`/admin/projects/${slug}`);
   }
 
   const Icon = getIcon(form.icon);
@@ -104,3 +100,5 @@ function NewProject() {
     </form>
   );
 }
+
+export default NewProject;
