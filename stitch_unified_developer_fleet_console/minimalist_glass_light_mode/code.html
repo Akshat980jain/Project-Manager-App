@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Minimalist Glass Project Dashboard</title>
+<!-- Tailwind CSS Integration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration for Custom Colors and Fonts -->
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "secondary-fixed": "#e1e0ff",
+                "surface-container-high": "#e2e8f8",
+                "on-secondary-fixed": "#07006c",
+                "on-tertiary-container": "#fffbff",
+                "on-background": "#151c27",
+                "on-error-container": "#93000a",
+                "surface-tint": "#006a61",
+                "inverse-surface": "#2a313d",
+                "inverse-on-surface": "#ebf1ff",
+                "background": "#f9f9ff",
+                "secondary-fixed-dim": "#c0c1ff",
+                "surface-container": "#e7eefe",
+                "on-primary-fixed": "#00201d",
+                "tertiary": "#924628",
+                "surface-container-low": "#f0f3ff",
+                "error": "#ba1a1a",
+                "error-container": "#ffdad6",
+                "on-primary": "#ffffff",
+                "primary-container": "#008378",
+                "on-tertiary-fixed-variant": "#773215",
+                "surface-container-highest": "#dce2f3",
+                "outline": "#6d7a77",
+                "on-primary-fixed-variant": "#005049",
+                "secondary-container": "#6063ee",
+                "tertiary-container": "#b05e3d",
+                "surface-dim": "#d3daea",
+                "on-surface": "#151c27",
+                "on-secondary-fixed-variant": "#2f2ebe",
+                "on-tertiary-fixed": "#370e00",
+                "secondary": "#4648d4",
+                "tertiary-fixed": "#ffdbce",
+                "on-secondary": "#ffffff",
+                "primary": "#00685f",
+                "primary-fixed": "#89f5e7",
+                "on-surface-variant": "#3d4947",
+                "tertiary-fixed-dim": "#ffb59a",
+                "inverse-primary": "#6bd8cb",
+                "surface": "#f9f9ff",
+                "surface-variant": "#dce2f3",
+                "on-secondary-container": "#fffbff",
+                "outline-variant": "#bcc9c6",
+                "on-primary-container": "#f4fffc",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "primary-fixed-dim": "#6bd8cb",
+                "on-error": "#ffffff",
+                "surface-bright": "#f9f9ff"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "xl": "32px",
+                "lg": "24px",
+                "xs": "4px",
+                "margin-mobile": "16px",
+                "gutter": "24px",
+                "margin-desktop": "48px",
+                "sm": "8px",
+                "md": "16px",
+                "base": "4px"
+        },
+        "fontFamily": {
+                "label-md": [
+                        "Inter"
+                ],
+                "body-md": [
+                        "Inter"
+                ],
+                "body-lg": [
+                        "Inter"
+                ],
+                "headline-lg": [
+                        "Inter"
+                ],
+                "headline-lg-mobile": [
+                        "Inter"
+                ],
+                "code": [
+                        "Inter"
+                ],
+                "title-md": [
+                        "Inter"
+                ],
+                "display-lg": [
+                        "Inter"
+                ]
+        },
+        "fontSize": {
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.01em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "code": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "title-md": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "display-lg": [
+                        "48px",
+                        {
+                                "lineHeight": "56px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ]
+        },
+        animation: {
+          'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        }
+      }
+    }
+  }
+</script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Custom Styles for specific visual effects -->
+<style data-purpose="custom-utilities">
+    body {
+      font-family: 'Inter', sans-serif;
+      /* Subtle off-white background */
+      background-color: #f9f9ff;
+      background-image: radial-gradient(circle at 50% 0%, rgba(0, 104, 95, 0.03) 0%, transparent 50%);
+      min-height: 100vh;
+    }
+
+    /* Glassmorphism utility class for cards */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+    
+    /* Highlighted card specific styles */
+    .glass-card.highlighted {
+       border-color: rgba(0, 104, 95, 0.3);
+       box-shadow: 0 10px 25px -5px rgba(0, 104, 95, 0.1), 0 8px 10px -6px rgba(0, 104, 95, 0.05);
+    }
+
+    /* Command K Search Input Styling */
+    .cmd-k-input {
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    
+    .cmd-k-input:focus-within {
+      border-color: rgba(0, 104, 95, 0.3);
+      background: rgba(255, 255, 255, 1);
+    }
+
+    /* Hide scrollbar for clean look */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-primary/20 text-on-surface">
+<!-- BEGIN: MainHeader -->
+<header class="sticky top-0 z-50 w-full border-b border-outline-variant bg-surface-container-lowest/80 backdrop-blur-xl">
+<div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+<!-- Left side: Logo & Navigation -->
+<div class="flex items-center gap-8">
+<!-- Logo Placeholder -->
+<a class="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-gray-100 to-gray-300 p-1 shadow-sm" href="#">
+<svg class="w-full h-full text-on-surface" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2L2 22h20L12 2z" fill="currentColor"></path>
+</svg>
+</a>
+<!-- Desktop Navigation -->
+<nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+<a class="text-on-surface relative py-1" href="#">
+            Projects
+            <span class="absolute inset-x-0 -bottom-5 h-0.5 bg-primary rounded-t-full"></span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors py-1" href="#">Teams</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors py-1" href="#">Analytics</a>
+</nav>
+</div>
+<!-- Right side: Search & Profile -->
+<div class="flex items-center gap-6">
+<!-- Command+K Search Interface -->
+<div class="hidden sm:flex items-center w-64 rounded-md cmd-k-input px-3 py-1.5 text-sm text-on-surface-variant shadow-sm cursor-pointer group">
+<svg class="w-4 h-4 mr-2 text-outline group-hover:text-on-surface-variant transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="flex-1 text-left">Search projects...</span>
+<kbd class="hidden md:inline-flex items-center font-sans text-xs text-outline bg-black/5 px-1.5 rounded border border-black/10">⌘K</kbd>
+</div>
+<!-- User Profile Avatar -->
+<button class="relative h-8 w-8 rounded-full overflow-hidden ring-1 ring-black/5 hover:ring-black/10 transition-all shadow-sm">
+<img alt="User Profile" class="object-cover w-full h-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3YJl_X6PBBNXmACYuf5KrHTn7eV2mSjgoUY-jRGhVVvT6GcyAuJgy8wd2SYl6pd_PEdV4aKynKGdCibrgWnUaFjRoED7ViOTNQ1kglJkfxgUdSXUSC1BbSZOQ2oIN728iKVkyr-rXLK4xnW3Svz574zgRP4pqIRnd1yG3xH1uH2473FLEeguboXm_uplxOXGZy3Cp0xS6drvmFtxJ3xlYmOVcOQz6CMhhTWLgfdhBBaRHHmZN-30OVxRiLwtfkDgV_dZElqL7DRM"/>
+</button>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<!-- BEGIN: MainContent -->
+<main class="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+<!-- Page Title Area -->
+<div class="mb-12">
+<h1 class="text-4xl font-semibold tracking-tight text-on-surface flex items-baseline gap-2">
+        Dynamic <span class="text-primary font-light">Grid</span>
+</h1>
+<p class="mt-2 text-on-surface-variant text-sm">Manage your portfolio of active projects.</p>
+</div>
+<!-- Project Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Project Card 1: ShopSpace -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-sm flex items-center justify-center text-2xl">
+            🚀
+          </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">ShopSpace</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">main</p>
+</div>
+</a>
+<!-- Project Card 2: Loop Chat (Highlighted State) -->
+<a class="glass-card highlighted rounded-2xl p-6 flex flex-col relative group overflow-hidden cursor-pointer" href="#">
+<div class="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex items-start justify-between mb-4 relative z-10">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 shadow-sm flex items-center justify-center text-2xl">
+            💬
+          </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div class="relative z-10">
+<h3 class="text-lg font-medium text-on-surface">Loop Chat</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">develop</p>
+</div>
+</a>
+<!-- Project Card 3: Vercel Docs -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-black/5 flex items-center justify-center">
+<svg class="w-6 h-6 text-black" fill="none" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2L2 22h20L12 2z" fill="currentColor"></path>
+</svg>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Vercel Docs</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">develop</p>
+</div>
+</a>
+<!-- Project Card 4: Linear Sync -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-800 to-indigo-600 shadow-sm flex items-center justify-center text-white">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Linear Sync</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">feature/login</p>
+</div>
+</a>
+<!-- Project Card 5: Auth0 Integration -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 shadow-sm flex items-center justify-center text-2xl text-white font-bold">
+            A
+          </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Auth0 Integration</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">feature/login</p>
+</div>
+</a>
+<!-- Project Card 6: Next.js Commerce -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-black shadow-sm flex items-center justify-center text-white font-bold text-xl">
+            N
+          </div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Next.js Commerce</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">feature/login</p>
+</div>
+</a>
+<!-- Project Card 7: Tailwind UI -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-white border border-black/5 shadow-sm flex items-center justify-center text-cyan-500">
+<svg class="w-7 h-7" fill="currentColor" viewbox="0 0 24 24"><path d="M12.001,4.8c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 C13.666,10.618,15.027,12,18.001,12c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C16.337,6.182,14.976,4.8,12.001,4.8z M6.001,12c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 c1.177,1.194,2.538,2.576,5.512,2.576c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C10.337,13.382,8.976,12,6.001,12z"></path></svg>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Tailwind UI</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">main</p>
+</div>
+</a>
+<!-- Project Card 8: Prisma ORM -->
+<a class="glass-card rounded-2xl p-6 flex flex-col relative group overflow-hidden" href="#">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-xl bg-slate-800 shadow-sm flex items-center justify-center text-white">
+<svg class="w-6 h-6" fill="currentColor" viewbox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4.5l6.5 13.5H5.5L12 6.5z"></path></svg>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 border border-green-200">
+<div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse-slow"></div>
+<span class="text-[10px] font-medium tracking-wide text-green-700 uppercase">Live</span>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-medium text-on-surface group-hover:text-primary transition-colors">Prisma ORM</h3>
+<p class="text-sm text-on-surface-variant mt-1 font-mono">release-v2</p>
+</div>
+</a>
+</div>
+</main>
+<!-- END: MainContent -->
+</body></html>

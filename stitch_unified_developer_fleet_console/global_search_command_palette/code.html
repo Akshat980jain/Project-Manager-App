@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Global Search &amp; Command Palette</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration (Strict adherence to provided Design System) -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-secondary-fixed": "#07006c",
+                        "surface-container-highest": "#dce2f3",
+                        "tertiary": "#924628",
+                        "primary-container": "#008378",
+                        "inverse-primary": "#6bd8cb",
+                        "surface-dim": "#d3daea",
+                        "surface-tint": "#006a61",
+                        "on-primary-fixed-variant": "#005049",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#dce2f3",
+                        "tertiary-container": "#b05e3d",
+                        "on-primary-container": "#f4fffc",
+                        "surface-bright": "#f9f9ff",
+                        "on-surface": "#151c27",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#2a313d",
+                        "on-error": "#ffffff",
+                        "background": "#f9f9ff",
+                        "primary-fixed-dim": "#6bd8cb",
+                        "secondary-fixed": "#e1e0ff",
+                        "surface": "#f9f9ff",
+                        "on-secondary-fixed-variant": "#2f2ebe",
+                        "on-tertiary-container": "#fffbff",
+                        "surface-container-high": "#e2e8f8",
+                        "secondary": "#4648d4",
+                        "outline-variant": "#bcc9c6",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#89f5e7",
+                        "on-surface-variant": "#3d4947",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#c0c1ff",
+                        "tertiary-fixed-dim": "#ffb59a",
+                        "on-secondary-container": "#fffbff",
+                        "outline": "#6d7a77",
+                        "primary": "#00685f",
+                        "secondary-container": "#6063ee",
+                        "on-background": "#151c27",
+                        "inverse-on-surface": "#ebf1ff",
+                        "error-container": "#ffdad6",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e7eefe",
+                        "surface-container-low": "#f0f3ff",
+                        "on-primary-fixed": "#00201d",
+                        "on-tertiary-fixed-variant": "#773215",
+                        "on-tertiary-fixed": "#370e00",
+                        "tertiary-fixed": "#ffdbce"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "sm": "0.25rem",
+                        "md": "0.75rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "base": "4px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "48px"
+                    },
+                    fontFamily: {
+                        "label-md": ["Inter", "sans-serif"],
+                        "headline-lg-mobile": ["Inter", "sans-serif"],
+                        "code": ["Inter", "monospace"],
+                        "title-md": ["Inter", "sans-serif"],
+                        "headline-lg": ["Inter", "sans-serif"],
+                        "body-lg": ["Inter", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "display-lg": ["Inter", "sans-serif"]
+                    },
+                    fontSize: {
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "code": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+                        "title-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden antialiased">
+<!-- Mock Background Content to demonstrate the overlay effect -->
+<div class="p-margin-desktop h-full w-full flex flex-col gap-6 opacity-40">
+<header class="h-16 w-full bg-surface-container-lowest rounded-lg border border-surface-variant"></header>
+<div class="flex gap-6 h-full">
+<aside class="w-64 bg-surface-container-lowest rounded-lg border border-surface-variant h-full hidden md:block"></aside>
+<main class="flex-1 bg-surface-container-lowest rounded-lg border border-surface-variant h-full p-8">
+<div class="w-1/3 h-8 bg-surface-variant rounded mb-8"></div>
+<div class="grid grid-cols-3 gap-6">
+<div class="h-32 bg-surface-container rounded border border-surface-variant"></div>
+<div class="h-32 bg-surface-container rounded border border-surface-variant"></div>
+<div class="h-32 bg-surface-container rounded border border-surface-variant"></div>
+</div>
+</main>
+</div>
+</div>
+<!-- Command Palette Overlay -->
+<div class="fixed inset-0 z-50 flex items-start justify-center pt-[122px] px-margin-mobile sm:px-margin-desktop bg-inverse-surface/30 backdrop-blur-md transition-opacity duration-200" id="command-palette-overlay">
+<!-- Palette Container -->
+<div class="w-full max-w-[720px] bg-surface-container-lowest rounded-xl shadow-[0_16px_40px_rgba(0,0,0,0.12)] border border-outline-variant/30 flex flex-col overflow-hidden transform transition-all duration-200">
+<!-- Search Input Header -->
+<div class="flex items-center px-4 h-16 border-b border-surface-variant bg-surface-container-lowest shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant mr-3 text-[24px]">search</span>
+<input autofocus="" class="flex-1 bg-transparent border-none focus:ring-0 text-body-lg text-on-surface placeholder:text-outline p-0 w-full" placeholder="Search commands, projects, or jump to..." type="text"/>
+<div class="flex items-center gap-2 ml-4">
+<kbd class="hidden sm:inline-flex items-center justify-center h-6 px-2 text-[11px] font-medium text-on-surface-variant bg-surface-container rounded border border-outline-variant/50">ESC</kbd>
+</div>
+</div>
+<!-- Scrollable Content Area -->
+<div class="overflow-y-auto max-h-[614px] py-2">
+<!-- Section: Recent Projects -->
+<div class="px-2 py-2">
+<h3 class="text-label-md text-on-surface-variant px-3 mb-1 uppercase tracking-wider">Recent Projects</h3>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">folder</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-medium text-on-surface">Fleet Analytics Core</span>
+<span class="text-[12px] text-on-surface-variant">Last deployed 2 hours ago</span>
+</div>
+</div>
+<span class="text-[12px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">↵ Enter</span>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-md bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">folder</span>
+</div>
+<div class="flex flex-col">
+<span class="text-body-md font-medium text-on-surface">Routing Engine v2</span>
+<span class="text-[12px] text-on-surface-variant">Last deployed yesterday</span>
+</div>
+</div>
+<span class="text-[12px] text-outline opacity-0 group-hover:opacity-100 transition-opacity">↵ Enter</span>
+</button>
+</div>
+<div class="h-px w-full bg-surface-variant my-1"></div>
+<!-- Section: Common Actions -->
+<div class="px-2 py-2">
+<h3 class="text-label-md text-on-surface-variant px-3 mb-1 uppercase tracking-wider">Common Actions</h3>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</div>
+<span class="text-body-md text-on-surface">Trigger New Deploy</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">code</span>
+</div>
+<span class="text-body-md text-on-surface">Add Environment Variable</span>
+</div>
+</button>
+</div>
+<div class="h-px w-full bg-surface-variant my-1"></div>
+<!-- Section: Navigation -->
+<div class="px-2 py-2">
+<h3 class="text-label-md text-on-surface-variant px-3 mb-1 uppercase tracking-wider">Navigation</h3>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</div>
+<span class="text-body-md text-on-surface">Go to Settings</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-container-low transition-colors group text-left">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">group</span>
+</div>
+<span class="text-body-md text-on-surface">Go to Teams</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Footer Hints -->
+<div class="border-t border-surface-variant bg-surface px-4 py-2 flex items-center justify-between shrink-0">
+<div class="flex items-center gap-4 text-[12px] text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">arrow_upward</span><span class="material-symbols-outlined text-[14px]">arrow_downward</span> to navigate</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">keyboard_return</span> to select</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro-interaction JS for visual completeness -->
+<script>
+        // Ensure input stays focused for the demo
+        document.querySelector('input').focus();
+    </script>
+</body></html>

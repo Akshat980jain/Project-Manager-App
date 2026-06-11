@@ -1,0 +1,147 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-elevated: var(--elevated);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --breakpoint-3xl: 1800px;
+  --breakpoint-4xl: 2200px;
+  --breakpoint-5xl: 2600px;
+  --breakpoint-6xl: 3200px;
+  --breakpoint-4k: 3800px;
+}
+
+/* Proton Fleet System — light */
+:root {
+  --radius: 0.5rem;
+  --background: #f9f9ff;
+  --foreground: #151c27;
+  --card: #ffffff;
+  --card-foreground: #151c27;
+  --popover: #ffffff;
+  --popover-foreground: #151c27;
+  --primary: #00685f;
+  --primary-foreground: #ffffff;
+  --secondary: #4648d4;
+  --secondary-foreground: #ffffff;
+  --muted: #f0f3ff;
+  --muted-foreground: #3d4947;
+  --accent: #e7eefe;
+  --accent-foreground: #151c27;
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+  --success: #00685f;
+  --success-foreground: #f4fffc;
+  --warning: #b05e3d;
+  --warning-foreground: #fffbff;
+  --info: #4648d4;
+  --info-foreground: #ffffff;
+  --elevated: #ffffff;
+  --border: #bcc9c6;
+  --input: #ffffff;
+  --ring: #00685f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #151c27;
+  --sidebar-primary: #00685f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f3ff;
+  --sidebar-accent-foreground: #151c27;
+  --sidebar-border: #bcc9c6;
+  --sidebar-ring: #00685f;
+}
+
+/* Proton Fleet System — dark */
+.dark {
+  --background: #0f121a;
+  --foreground: #e2e8f8;
+  --card: #161922;
+  --card-foreground: #e2e8f8;
+  --popover: #161922;
+  --popover-foreground: #e2e8f8;
+  --primary: #6bd8cb;
+  --primary-foreground: #00201d;
+  --secondary: #c0c1ff;
+  --secondary-foreground: #07006c;
+  --muted: #212530;
+  --muted-foreground: #bcc9c6;
+  --accent: #2a313d;
+  --accent-foreground: #ebf1ff;
+  --destructive: #ffdad6;
+  --destructive-foreground: #93000a;
+  --success: #89f5e7;
+  --success-foreground: #00201d;
+  --warning: #ffdbce;
+  --warning-foreground: #370e00;
+  --info: #c0c1ff;
+  --info-foreground: #07006c;
+  --elevated: #1c202d;
+  --border: #2a313d;
+  --input: #161922;
+  --ring: #6bd8cb;
+  --sidebar: #12151e;
+  --sidebar-foreground: #e2e8f8;
+  --sidebar-primary: #6bd8cb;
+  --sidebar-primary-foreground: #00201d;
+  --sidebar-accent: #212530;
+  --sidebar-accent-foreground: #e2e8f8;
+  --sidebar-border: #2a313d;
+  --sidebar-ring: #6bd8cb;
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "cv11", "ss01";
+  }
+  html { color-scheme: light dark; }
+  html.dark { color-scheme: dark; }
+}
+
+/* Glass card utility */
+@utility glass {
+  background: color-mix(in oklab, var(--card) 70%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in oklab, var(--border) 80%, transparent);
+}
