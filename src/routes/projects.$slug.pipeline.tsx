@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute, useParams, Link } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { streamLogs, stopDevServer, startDevServer } from "@/lib/api/processes";
+import { toast } from "sonner";
 import {
   Play,
   RotateCw,
@@ -31,40 +34,104 @@ export const Route = createFileRoute("/projects/$slug/pipeline")({
 function ProjectPipelinePage() {
   const { slug } = useParams({ from: "/projects/$slug/pipeline" });
   const terminalEndRef = useRef<HTMLDivElement>(null);
-  const [isRunning, setIsRunning] = useState(true);
-  const [timerSeconds, setTimerSeconds] = useState(165); // starts at 2m 45s
   
+  const [logs, setLogs] = useState<string[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+
+  const queryClient = useQueryClient();
+
+  const stopServerMutation = useMutation({
+    mutationFn: () => stopDevServer({ data: { projectDir: slug } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["process-statuses"] });
+      toast.success("Dev server stopped.");
+    },
+    onError: (err: any) => {
+      toast.error(`Failed to stop server: ${err.message}`);
+    }
+  });
+
+  const restartServerMutation = useMutation({
+    mutationFn: () => startDevServer({ data: { projectDir: slug, script: "dev" } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["process-statuses"] });
+      toast.success("Restarting dev server...");
+      setTimerSeconds(0);
+      setLogs(["[Control Panel] Connecting to console stream..."]);
+    },
+    onError: (err: any) => {
+      toast.error(`Failed to start server: ${err.message}`);
+    }
+  });
+
   const projectName = slug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
-  // Custom live logs stream simulating a live webpack compiler
-  const [logs, setLogs] = useState<string[]>([
-    "-- DevEngine Output Stream Initialized --",
-    "[info] Pulling repository...",
-    "[info] Repository pulled successfully.",
-    "Installing dependencies via yarn...",
-    "➤ YN0000: ┌ Resolution step",
-    "➤ YN0000: ├ Completed in 1.2s",
-    "➤ YN0000: ┌ Fetch step",
-    "➤ YN0000: ├ Completed in 0.8s",
-    "➤ YN0000: ┌ Link step",
-    "➤ YN0000: └ Completed in 2.1s",
-    "[success] Dependencies installed.",
-    "[info] Executing linting checks...",
-    "eslint . --ext .js,.jsx,.ts,.tsx",
-    "[success] Linting passed.",
-    "[info] Initiating build process...",
-    "> NODE_ENV=production webpack --config webpack.prod.js",
-    "Asset modules: 12.4 KiB",
-    "Entrypoint main [big] = runtime.js main.css main.js",
-    "   ↳ [0] ./src/index.js 3.5 KiB {main} [built]",
-    "   ↳ [1] ./src/app.jsx 14.2 KiB {main} [built]",
-    "   ↳ [2] ./src/styles.css 2.1 KiB {main} [built]",
-    "[warn] Bundle size exceeds recommended limit (244 KiB).",
-    "> Optimizing chunks and minifying assets (85%)...",
-  ]);
+  // Real-time server log streaming reader
+  useEffect(() => {
+    let active = true;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+
+    async function connectStream() {
+      try {
+        setLogs(["[Control Panel] Connecting to console stream..."]);
+        setIsRunning(true);
+
+        const response = await streamLogs({ data: { projectDir: slug } });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+
+        if (!response.body) {
+          throw new Error("No response body stream found.");
+        }
+
+        setLogs([]); // Clear connecting status once stream opens
+        reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (active) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          if (buffer.includes("\n")) {
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? ""; // Store trailing characters
+            
+            // Filter keep-alive heartbeat pings (empty lines)
+            const filteredLines = lines.filter(line => line.trim() !== "");
+            if (filteredLines.length > 0) {
+              setLogs((prev) => [...prev, ...filteredLines]);
+            }
+          }
+        }
+      } catch (err: any) {
+        if (active) {
+          setLogs((prev) => [...prev, `[Control Panel] Connection closed: ${err.message}`]);
+        }
+      } finally {
+        if (active) {
+          setIsRunning(false);
+        }
+      }
+    }
+
+    connectStream();
+
+    return () => {
+      active = false;
+      if (reader) {
+        reader.cancel().catch(() => {});
+      }
+    };
+  }, [slug]);
 
   // Live timer tick
   useEffect(() => {
@@ -73,32 +140,6 @@ function ProjectPipelinePage() {
       setTimerSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [isRunning]);
-
-  // Append new logs occasionally
-  useEffect(() => {
-    if (!isRunning) return;
-    const logInterval = setInterval(() => {
-      const additionalLogs = [
-        "➤ [Webpack] Chunks optimization completed in 1.4s",
-        "➤ [Webpack] Compiled bundle assets successfully stored.",
-        "[success] Build finished in 18.2s.",
-        "[info] Preparing serverless bundle...",
-        "[info] Deploying lambda to aws-east-1...",
-        "[success] Service successfully routing 100% of production queries!",
-      ];
-      
-      setLogs((prev) => {
-        if (prev.length >= 23 + additionalLogs.length) {
-          setIsRunning(false); // complete compilation
-          return prev;
-        }
-        const nextIndex = prev.length - 23;
-        return [...prev, additionalLogs[nextIndex]];
-      });
-    }, 4000);
-    
-    return () => clearInterval(logInterval);
   }, [isRunning]);
 
   // Autoscroll terminal
@@ -113,21 +154,7 @@ function ProjectPipelinePage() {
   };
 
   const handleRestart = () => {
-    setLogs([
-      "-- DevEngine Output Stream Initialized --",
-      "[info] Pulling repository...",
-      "[info] Repository pulled successfully.",
-      "Installing dependencies via yarn...",
-      "➤ YN0000: ┌ Resolution step",
-      "➤ YN0000: └ Completed in 1.2s",
-      "[success] Dependencies installed.",
-      "[info] Executing linting checks...",
-      "[success] Linting passed.",
-      "[info] Initiating build process...",
-      "> Optimizing chunks and minifying assets (10%)...",
-    ]);
-    setTimerSeconds(0);
-    setIsRunning(true);
+    restartServerMutation.mutate();
   };
 
   return (
@@ -139,32 +166,36 @@ function ProjectPipelinePage() {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 bg-primary-container/10 text-primary border border-primary/20 px-2.5 py-0.5 rounded-full text-xs font-semibold">
                 <span className={`w-2 h-2 rounded-full bg-primary ${isRunning ? "animate-pulse" : ""}`} />
-                {isRunning ? "In Progress" : "Completed"}
+                {isRunning ? "Running" : "Stopped"}
               </span>
-              <span className="text-xs text-muted-foreground font-mono">Pipeline #8492</span>
+              <span className="text-xs text-muted-foreground font-mono">Console Monitor</span>
             </div>
             <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-              Production Deployment
+              Dev Server Console
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
             {isRunning && (
               <Button
-                onClick={() => setIsRunning(false)}
+                onClick={() => stopServerMutation.mutate()}
+                disabled={stopServerMutation.isPending}
                 variant="outline"
                 size="sm"
-                className="gap-2 h-9 border-border bg-card hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="gap-2 h-9 border-border bg-card hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
               >
-                <XCircle className="h-4 w-4" /> Cancel Run
+                {stopServerMutation.isPending ? <Loader2 className="h-4.5 w-4.5 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                Stop Process
               </Button>
             )}
             <Button
               onClick={handleRestart}
+              disabled={restartServerMutation.isPending}
               size="sm"
-              className="gap-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_12px_rgba(0,104,95,0.2)]"
+              className="gap-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_12px_rgba(0,104,95,0.2)] cursor-pointer"
             >
-              <RotateCw className="h-4 w-4" /> Restart
+              {restartServerMutation.isPending ? <Loader2 className="h-4.5 w-4.5 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+              Restart
             </Button>
           </div>
         </header>

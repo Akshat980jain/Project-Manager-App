@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { scanProjects, excludeProject, deleteProjectFolder } from "@/lib/api/explorer.functions";
+import { getProcessStatuses } from "@/lib/api/processes";
 import {
   Rocket,
   MessageSquare,
@@ -104,6 +105,13 @@ function DynamicGridDashboard() {
     queryFn: () => scanProjects(),
   });
 
+  // Query server process statuses (polling every 4 seconds)
+  const { data: processStatuses } = useQuery({
+    queryKey: ["process-statuses"],
+    queryFn: () => getProcessStatuses(),
+    refetchInterval: 4000,
+  });
+
   const excludeMutation = useMutation({
     mutationFn: (projectDir: string) => excludeProject({ data: { projectDir } }),
     onSuccess: () => {
@@ -181,6 +189,20 @@ function DynamicGridDashboard() {
                 >
                   {/* Hover gradient wash */}
                   <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                  {/* Live Process Status Badge (top-left) */}
+                  {processStatuses?.[project.dirName]?.status === "running" && (
+                    <div className="absolute top-3 left-3 z-30 flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full text-[8px] font-bold text-emerald-400 font-mono">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      RUNNING
+                    </div>
+                  )}
+                  {processStatuses?.[project.dirName]?.status === "starting" && (
+                    <div className="absolute top-3 left-3 z-30 flex items-center gap-1 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-full text-[8px] font-bold text-amber-400 font-mono">
+                      <RefreshCw className="h-2.5 w-2.5 animate-spin" />
+                      STARTING
+                    </div>
+                  )}
 
                   {/* ⋮ management button — top-right, hover only */}
                   <button
