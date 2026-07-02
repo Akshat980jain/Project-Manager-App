@@ -310,7 +310,7 @@ INSERT INTO public.categories (name, slug, color) VALUES
 
 INSERT INTO public.projects (name, slug, description, icon, color, status, tech_stack, tags, category_id) VALUES
   ('AI Document Vault', 'ai-document-vault', 'Secure AI-powered document storage with semantic search.', 'Bot', '#a78bfa', 'active', ARRAY['React','OpenAI','Supabase'], ARRAY['ai','documents'], (SELECT id FROM public.categories WHERE slug='ai')),
-  ('Android ERP', 'android-erp', 'Enterprise resource planning app for Android.', 'Smartphone', '#3fb950', 'active', ARRAY['Android','Kotlin','MERN'], ARRAY['erp','mobile'], (SELECT id FROM public.categories WHERE slug='android')),
+  ('EduConnect', 'android-erp', 'Enterprise resource planning app for Android.', 'Smartphone', '#3fb950', 'active', ARRAY['Android','Kotlin','MERN'], ARRAY['erp','mobile'], (SELECT id FROM public.categories WHERE slug='android')),
   ('Audio App', 'audio-app', 'Music streaming and audio playback application.', 'Music', '#ec4899', 'in_development', ARRAY['React Native','Node.js'], ARRAY['audio'], (SELECT id FROM public.categories WHERE slug='mern')),
   ('Blockchain Voting System', 'blockchain-voting', 'Decentralized voting platform on Ethereum.', 'Link', '#f59e0b', 'completed', ARRAY['Solidity','Web3','React'], ARRAY['blockchain','voting'], (SELECT id FROM public.categories WHERE slug='blockchain')),
   ('Booking Management App', 'booking-management', 'Full booking workflow with calendar and payments.', 'Calendar', '#58a6ff', 'active', ARRAY['MERN','Stripe'], ARRAY['booking'], (SELECT id FROM public.categories WHERE slug='mern')),
