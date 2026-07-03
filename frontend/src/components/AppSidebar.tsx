@@ -96,6 +96,12 @@ export function AppSidebar() {
       isActive: pathname === `/projects/${slug}` && (!searchTab || searchTab === "overview"),
     },
     {
+      title: "Pipeline",
+      to: `/projects/${slug}/pipeline`,
+      icon: Rocket,
+      isActive: pathname === `/projects/${slug}/pipeline`,
+    },
+    {
       title: "Security",
       to: "/settings/security",
       icon: Shield,

@@ -113,26 +113,32 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        ws: true,
-        configure: (proxy) => {
-          proxy.on("error", (err, _req, res) => {
-            if (res && typeof (res as any).writeHead === "function") {
-              (res as any).writeHead(503, { "Content-Type": "application/json" });
-              (res as any).end(JSON.stringify({ error: "Companion server booting or offline" }));
-            }
-          });
-        }
-      }
-    }
   },
 });
 
+const MAPPED_DIRECTORIES: Record<string, string> = {
+  "booking-management-app": "BookEase24X7",
+  "ytblog": "Scribe",
+  "lovable-chat-app": "Loop Chat",
+  "quickkart-app-bolt": "QuickKart",
+  "android-erp": "EduConnect",
+  "ems": "StaffSphere",
+  "upload-app": "GallaryHub",
+  "pulse-app": "Pulse",
+  "project-2026": "Project  2026"
+};
+
 function resolveProjectPath(projectDir: string): string | null {
   const parentDir = path.resolve(process.cwd(), "../..");
+  
+  // 0. Check mapped directory first
+  const lowerDir = projectDir.toLowerCase();
+  if (MAPPED_DIRECTORIES[lowerDir]) {
+    const mappedPath = path.join(parentDir, MAPPED_DIRECTORIES[lowerDir]);
+    if (fs.existsSync(mappedPath)) {
+      return mappedPath;
+    }
+  }
   
   // 1. Direct match (exact case-insensitive match)
   const directPath = path.join(parentDir, projectDir);

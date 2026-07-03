@@ -1,0 +1,21 @@
+{
+  "name": "devengine-terminal-agent",
+  "version": "1.0.0",
+  "description": "Dedicated local terminal WebSocket agent for DevEngine",
+  "main": "server.ts",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "node-pty": "^1.1.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}

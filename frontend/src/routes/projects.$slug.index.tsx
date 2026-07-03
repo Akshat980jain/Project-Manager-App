@@ -1,6 +1,6 @@
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@/hooks/use-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { getFileTree, getFileContent, getProjectDetail, getGitHistory, type FileNode } from "@/lib/api/explorer.functions";
 import { 

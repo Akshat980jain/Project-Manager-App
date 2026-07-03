@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@/hooks/use-query";
+import { Terminal as XTerm } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import "xterm/css/xterm.css";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { 
@@ -39,9 +42,9 @@ import {
   StopCircle,
   RefreshCw,
   HelpCircle,
-  FileCode,
   Check,
   X,
+  Plus,
   AlertTriangle,
 } from "lucide-react";
 
@@ -55,9 +58,125 @@ function ProjectPipelinePage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-  const [streamSource, setStreamSource] = useState<"dev" | "build">("dev");
+  const [streamSource, setStreamSource] = useState<"dev" | "build" | "interactive">("dev");
   const [activeBuildId, setActiveBuildId] = useState<string | null>(null);
   const [expandedBuildId, setExpandedBuildId] = useState<string | null>(null);
+
+  const [terminalTabs, setTerminalTabs] = useState<{ id: string; name: string }[]>([
+    { id: "1", name: "powershell" }
+  ]);
+  const [activeTerminalId, setActiveTerminalId] = useState<string>("1");
+  const [editingTabId, setEditingTabId] = useState<string | null>(null);
+  const [editingTabName, setEditingTabName] = useState<string>("");
+  const terminalRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const xtermInstances = useRef<Record<string, XTerm>>({});
+  const wsInstances = useRef<Record<string, WebSocket>>({});
+
+  const addTerminalTab = () => {
+    const newId = Date.now().toString();
+    setTerminalTabs([...terminalTabs, { id: newId, name: "powershell" }]);
+    setActiveTerminalId(newId);
+  };
+
+  const removeTerminalTab = (id: string) => {
+    if (wsInstances.current[id]) {
+      wsInstances.current[id].close();
+      delete wsInstances.current[id];
+    }
+    if (xtermInstances.current[id]) {
+      xtermInstances.current[id].dispose();
+      delete xtermInstances.current[id];
+    }
+    if (terminalRefs.current[id]) {
+      delete terminalRefs.current[id];
+    }
+
+    const filtered = terminalTabs.filter((t) => t.id !== id);
+    setTerminalTabs(filtered);
+    if (activeTerminalId === id && filtered.length > 0) {
+      setActiveTerminalId(filtered[filtered.length - 1].id);
+    }
+  };
+
+  useEffect(() => {
+    if (streamSource !== "interactive") {
+      Object.keys(wsInstances.current).forEach((id) => {
+        try { wsInstances.current[id].close(); } catch {}
+      });
+      Object.keys(xtermInstances.current).forEach((id) => {
+        try { xtermInstances.current[id].dispose(); } catch {}
+      });
+      wsInstances.current = {};
+      xtermInstances.current = {};
+      terminalRefs.current = {};
+      return;
+    }
+
+    terminalTabs.forEach((tab) => {
+      const container = terminalRefs.current[tab.id];
+      if (!container || xtermInstances.current[tab.id]) return;
+
+      const term = new XTerm({
+        cursorBlink: true,
+        fontSize: 13,
+        lineHeight: 1.2,
+        fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+        theme: {
+          background: "#09090b",
+          foreground: "#d4d4d8",
+          cursor: "#10b981",
+        },
+        convertEol: true,
+        logLevel: "off",
+      });
+
+      const fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(container);
+      fitAddon.fit();
+      xtermInstances.current[tab.id] = term;
+
+      const wsUrl = `ws://localhost:3000/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+      const ws = new WebSocket(wsUrl);
+      wsInstances.current[tab.id] = ws;
+
+      ws.onopen = () => {
+        term.write("\r\n\x1b[32m[Connected to DevEngine Terminal Agent]\x1b[0m\r\n");
+        term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev\x1b[0m\r\n");
+        term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
+        const dims = { type: "resize", cols: term.cols, rows: term.rows };
+        ws.send(JSON.stringify(dims));
+      };
+
+      ws.onmessage = (event) => {
+        term.write(event.data);
+      };
+
+      ws.onerror = () => {
+        term.write("\r\n\x1b[31m[Error connecting to local Terminal Agent on port 3000. Is it running?]\x1b[0m\r\n");
+      };
+
+      ws.onclose = () => {
+        term.write("\r\n\x1b[31m[Terminal Agent Disconnected]\x1b[0m\r\n");
+      };
+
+      term.onData((data) => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(data);
+        }
+      });
+    });
+
+    const activeTerm = xtermInstances.current[activeTerminalId];
+    if (activeTerm) {
+      setTimeout(() => {
+        try {
+          const fitAddon = (activeTerm as any)._addons.find((a: any) => a instanceof FitAddon);
+          if (fitAddon) fitAddon.fit();
+        } catch {}
+      }, 50);
+    }
+  }, [streamSource, terminalTabs, activeTerminalId, slug]);
 
   useEffect(() => {
     if (slug) {
@@ -389,7 +508,7 @@ function ProjectPipelinePage() {
         {/* Pipeline flowchart + Live Terminal */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: flowchart */}
-          <div className="lg:col-span-5 border border-border/40 rounded-xl bg-card/60 backdrop-blur p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] relative overflow-hidden space-y-6">
+          <div className="lg:col-span-4 border border-border/40 rounded-xl bg-card/60 backdrop-blur p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] relative overflow-hidden space-y-6">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Activity className="h-4.5 w-4.5 text-primary" /> Pipeline Execution Flow
@@ -427,31 +546,20 @@ function ProjectPipelinePage() {
               </div>
 
               {/* Stage 3 */}
-              <div className={`relative flex gap-4 ${streamSource !== "build" ? "opacity-50" : ""}`}>
-                <div className={`absolute left-[-21px] z-10 w-4.5 h-4.5 rounded-full flex items-center justify-center shadow ${
-                  isRunning && streamSource === "build"
-                    ? "bg-amber-500/10 border border-amber-500/30 text-amber-400"
-                    : "bg-muted/40 border border-border text-muted-foreground"
-                }`}>
-                  {isRunning && streamSource === "build" ? (
-                    <RefreshCw className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Check className="h-3 w-3" />
-                  )}
+              <div className="relative flex gap-4 opacity-50">
+                <div className="absolute left-[-21px] z-10 w-4.5 h-4.5 rounded-full bg-muted/40 border border-border text-muted-foreground flex items-center justify-center shadow">
+                  <Check className="h-3 w-3" />
                 </div>
                 <div className="flex-1">
                   <div className="flex justify-between items-center font-bold">
                     <span className="text-foreground">Compilation & Bundling</span>
-                    {isRunning && streamSource === "build" && (
-                      <span className="text-[9px] text-amber-400 font-bold uppercase animate-pulse">Running...</span>
-                    )}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-0.5">Compiles source code assets, runs build scripts, or constructs containers.</p>
                 </div>
               </div>
 
               {/* Stage 4 */}
-              <div className={`relative flex gap-4 ${streamSource !== "build" ? "opacity-50" : ""}`}>
+              <div className="relative flex gap-4 opacity-50">
                 <div className="absolute left-[-21px] z-10 w-4.5 h-4.5 rounded-full bg-muted/40 border border-border text-muted-foreground flex items-center justify-center shadow">
                   <Check className="h-3 w-3" />
                 </div>
@@ -466,54 +574,194 @@ function ProjectPipelinePage() {
           </div>
 
           {/* Right: Console Terminal */}
-          <div className="lg:col-span-7 border border-border/40 rounded-xl bg-zinc-950 shadow-2xl flex flex-col h-[400px] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 bg-zinc-900 border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <TerminalIcon className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold text-zinc-400 tracking-wider">
-                  {streamSource === "dev" ? "LIVE DEV SERVER" : "LIVE PIPELINE BUILDER"}
+          <div className="lg:col-span-8 border border-border/40 rounded-xl bg-[#18181b] shadow-2xl flex flex-col h-[500px] overflow-hidden text-[11px] font-sans">
+            <div className="flex items-center justify-between px-4 py-2 bg-[#18181b] border-b border-[#2d2d2d] select-none text-zinc-400">
+              <div className="flex items-center gap-4">
+                <span className="cursor-not-allowed hover:text-zinc-500 transition-colors text-zinc-600">
+                  Problems
+                </span>
+                <button
+                  onClick={() => setStreamSource("dev")}
+                  className={`transition-colors cursor-pointer hover:text-zinc-200 ${
+                    streamSource === "dev"
+                      ? "text-zinc-100 font-semibold border-b-2 border-primary pb-1 pt-0.5"
+                      : "pb-1 pt-0.5"
+                  }`}
+                >
+                  Output
+                </button>
+                <button
+                  onClick={() => setStreamSource("build")}
+                  className={`transition-colors cursor-pointer hover:text-zinc-200 ${
+                    streamSource === "build"
+                      ? "text-zinc-100 font-semibold border-b-2 border-primary pb-1 pt-0.5"
+                      : "pb-1 pt-0.5"
+                  }`}
+                >
+                  Debug Console
+                </button>
+                <button
+                  onClick={() => setStreamSource("interactive")}
+                  className={`transition-colors cursor-pointer hover:text-zinc-200 ${
+                    streamSource === "interactive"
+                      ? "text-zinc-100 font-semibold border-b-2 border-primary pb-1 pt-0.5"
+                      : "pb-1 pt-0.5"
+                  }`}
+                >
+                  Terminal
+                </button>
+                <span className="cursor-not-allowed hover:text-zinc-500 transition-colors text-zinc-600">
+                  Ports
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setLogs(["-- Console Output Stream Cleared --"])}
-                  className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer"
-                  title="Clear Console"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-                <button className="text-zinc-500 hover:text-zinc-300 transition-colors p-1 cursor-pointer" title="Expand logs">
-                  <Maximize2 className="h-4 w-4" />
-                </button>
+
+              <div className="flex items-center gap-2 text-zinc-500">
+                {streamSource === "interactive" && (
+                  <>
+                    <button
+                      onClick={addTerminalTab}
+                      className="hover:text-zinc-300 p-1 rounded hover:bg-[#2d2d2d] transition-colors cursor-pointer"
+                      title="New Terminal"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => removeTerminalTab(activeTerminalId)}
+                      className="hover:text-zinc-300 p-1 rounded hover:bg-[#2d2d2d] transition-colors cursor-pointer"
+                      title="Kill Terminal"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                )}
+                {streamSource !== "interactive" && (
+                  <button
+                    onClick={() => setLogs(["-- Console Output Stream Cleared --"])}
+                    className="hover:text-zinc-300 p-1 rounded hover:bg-[#2d2d2d] transition-colors cursor-pointer"
+                    title="Clear Console"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex-1 p-5 overflow-y-auto font-mono text-[11px] leading-relaxed text-zinc-300 select-text">
-              {logs.map((log, index) => {
-                let colorClass = "text-zinc-400";
-                const lowerLog = log.toLowerCase();
-                if (lowerLog.includes("error") || lowerLog.includes("failed")) {
-                  colorClass = "text-red-400 font-bold";
-                } else if (lowerLog.includes("success") || lowerLog.includes("completed")) {
-                  colorClass = "text-emerald-400 font-semibold";
-                } else if (log.startsWith("[warn]")) {
-                  colorClass = "text-amber-400";
-                } else if (log.startsWith("[")) {
-                  colorClass = "text-zinc-500 font-bold";
-                } else if (log.startsWith(">")) {
-                  colorClass = "text-zinc-100";
-                }
-                return (
-                  <div key={index} className={`mb-1 whitespace-pre-wrap ${colorClass}`}>
-                    {log}
-                  </div>
-                );
-              })}
-              {isRunning && (
-                <span className="inline-block w-2 h-3.5 bg-primary ml-1 animate-pulse" />
-              )}
-              <div ref={terminalEndRef} />
-            </div>
+            {streamSource === "interactive" ? (
+              <div className="flex-1 flex overflow-hidden bg-[#121212]">
+                {/* Left: Terminal Shell Screens */}
+                <div className="flex-1 p-4 overflow-hidden relative">
+                  {terminalTabs.map((tab) => (
+                    <div
+                      key={tab.id}
+                      ref={(el) => {
+                        terminalRefs.current[tab.id] = el;
+                      }}
+                      className={tab.id === activeTerminalId ? "w-full h-full text-left bg-[#121212]" : "hidden"}
+                    />
+                  ))}
+                </div>
+
+                {/* Right: VS Code-style Shells Sidebar */}
+                <div className="w-[155px] border-l border-zinc-800 bg-[#18181b] p-1 flex flex-col gap-0.5 select-none overflow-y-auto shrink-0">
+                  {terminalTabs.map((tab) => {
+                    const isActive = tab.id === activeTerminalId;
+                    const isEditing = tab.id === editingTabId;
+                    return (
+                      <div
+                        key={tab.id}
+                        onClick={() => {
+                          if (!isEditing) setActiveTerminalId(tab.id);
+                        }}
+                        onDoubleClick={() => {
+                          setEditingTabId(tab.id);
+                          setEditingTabName(tab.name);
+                        }}
+                        className={`group flex items-center justify-between px-2.5 py-1.5 rounded text-[11px] font-mono cursor-pointer transition-colors ${
+                          isActive
+                            ? "bg-[#2d2d2d] text-zinc-100 font-bold border-l-2 border-primary"
+                            : "text-zinc-400 hover:bg-[#1e1e1e] hover:text-zinc-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 w-full overflow-hidden">
+                          <TerminalIcon className={`h-3 w-3 shrink-0 ${isActive ? "text-primary" : "text-zinc-500"}`} />
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={editingTabName}
+                              onChange={(e) => setEditingTabName(e.target.value)}
+                              onBlur={() => {
+                                if (editingTabName.trim()) {
+                                  setTerminalTabs(
+                                    terminalTabs.map((t) => (t.id === tab.id ? { ...t, name: editingTabName } : t))
+                                  );
+                                }
+                                setEditingTabId(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  if (editingTabName.trim()) {
+                                    setTerminalTabs(
+                                      terminalTabs.map((t) => (t.id === tab.id ? { ...t, name: editingTabName } : t))
+                                    );
+                                  }
+                                  setEditingTabId(null);
+                                } else if (e.key === "Escape") {
+                                  setEditingTabId(null);
+                                }
+                              }}
+                              className="bg-zinc-800 text-zinc-100 px-1 py-0.5 rounded outline-none border border-zinc-700 w-full"
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            <span className="truncate">{tab.name}</span>
+                          )}
+                        </div>
+                        {terminalTabs.length > 1 && !isEditing && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeTerminalTab(tab.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 transition-opacity p-0.5 shrink-0"
+                            title="Kill Terminal"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 p-5 overflow-y-auto font-mono text-[11px] leading-relaxed text-zinc-300 select-text">
+                {logs.map((log, index) => {
+                  let colorClass = "text-zinc-400";
+                  const lowerLog = log.toLowerCase();
+                  if (lowerLog.includes("error") || lowerLog.includes("failed")) {
+                    colorClass = "text-red-400 font-bold";
+                  } else if (lowerLog.includes("success") || lowerLog.includes("completed")) {
+                    colorClass = "text-emerald-400 font-semibold";
+                  } else if (log.startsWith("[warn]")) {
+                    colorClass = "text-amber-400";
+                  } else if (log.startsWith("[")) {
+                    colorClass = "text-zinc-500 font-bold";
+                  } else if (log.startsWith(">")) {
+                    colorClass = "text-zinc-100";
+                  }
+                  return (
+                    <div key={index} className={`mb-1 whitespace-pre-wrap ${colorClass}`}>
+                      {log}
+                    </div>
+                  );
+                })}
+                {isRunning && (
+                  <span className="inline-block w-2 h-3.5 bg-primary ml-1 animate-pulse" />
+                )}
+                <div ref={terminalEndRef} />
+              </div>
+            )}
           </div>
         </div>
 

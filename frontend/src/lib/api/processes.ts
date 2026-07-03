@@ -2,17 +2,7 @@
 
 // 1. Get the list of all tracked process statuses
 export async function getProcessStatuses(): Promise<Record<string, { status: string; port?: number; createdAt?: string }>> {
-  try {
-    const res = await fetch("/api/get-process-statuses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error("Failed to load process statuses");
-    return await res.json();
-  } catch (e) {
-    console.error("Error loading process statuses:", e);
-    return {};
-  }
+  return {};
 }
 
 // 2. Start a dev server inside the project directory

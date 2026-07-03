@@ -9,6 +9,47 @@ function parseGithubUrl(url: string | null | undefined): { owner: string; repo: 
   }
   return null;
 }
+function convertGithubTreeToFileNodes(gitTree: any[], projectDir: string): FileNode[] {
+  const root: FileNode[] = [];
+  const map: Record<string, FileNode> = {};
+
+  gitTree.forEach((item) => {
+    const parts = item.path.split("/");
+    const isDir = item.type === "tree";
+    
+    let currentPath = "";
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const partPath = currentPath ? `${currentPath}/${part}` : part;
+      currentPath = partPath;
+
+      if (!map[partPath]) {
+        const node: FileNode = {
+          name: part,
+          relativePath: partPath,
+          fullPath: `${projectDir}/${partPath}`,
+          isDirectory: i < parts.length - 1 ? true : isDir,
+        };
+        if (node.isDirectory) {
+          node.children = [];
+        }
+        
+        if (i === 0) {
+          root.push(node);
+        } else {
+          const parent = map[parts.slice(0, i).join("/")];
+          if (parent && parent.children) {
+            parent.children.push(node);
+          }
+        }
+        map[partPath] = node;
+      }
+    }
+  });
+
+  return root;
+}
 
 
 export interface FileNode {
@@ -49,8 +90,36 @@ export async function scanProjects() {
   }));
 }
 
-// 2. Get File Tree — fetches the actual directory structure from the custom Vite API
+// 2. Get File Tree — fetches the actual directory structure from GitHub or the custom Vite API
 export async function getFileTree(args: { data: { projectDir: string } }): Promise<FileNode[]> {
+  try {
+    const { data: project } = await supabase
+      .from("projects")
+      .select("github_url")
+      .eq("slug", args.data.projectDir)
+      .maybeSingle();
+
+    const parsed = parseGithubUrl(project?.github_url);
+    if (parsed) {
+      try {
+        const token = localStorage.getItem("github_pat");
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `token ${token}`;
+        }
+        const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/main?recursive=1`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tree && Array.isArray(data.tree)) {
+            return convertGithubTreeToFileNodes(data.tree, args.data.projectDir);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch tree from GitHub:", e);
+      }
+    }
+  } catch {}
+
   try {
     const res = await fetch(`/api/get-file-tree?projectDir=${encodeURIComponent(args.data.projectDir)}`);
     if (!res.ok) throw new Error("Failed to load file tree");
@@ -61,8 +130,41 @@ export async function getFileTree(args: { data: { projectDir: string } }): Promi
   }
 }
 
-// 3. Get File Content — fetches actual file content from the custom Vite API
+// 3. Get File Content — fetches actual file content from GitHub or the custom Vite API
 export async function getFileContent(args: { data: { fullPath: string } }): Promise<string> {
+  try {
+    const firstSlashIndex = args.data.fullPath.indexOf("/");
+    const slug = firstSlashIndex !== -1 ? args.data.fullPath.substring(0, firstSlashIndex) : args.data.fullPath;
+    const filePath = firstSlashIndex !== -1 ? args.data.fullPath.substring(firstSlashIndex + 1) : "";
+
+    const { data: project } = await supabase
+      .from("projects")
+      .select("github_url")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    const parsed = parseGithubUrl(project?.github_url);
+    if (parsed && filePath) {
+      try {
+        const token = localStorage.getItem("github_pat");
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `token ${token}`;
+        }
+        const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/contents/${filePath}`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.content && data.encoding === "base64") {
+            const binString = atob(data.content.replace(/\s/g, ""));
+            return new TextDecoder().decode(Uint8Array.from(binString, (c) => c.charCodeAt(0)));
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch file content from GitHub:", e);
+      }
+    }
+  } catch {}
+
   try {
     const res = await fetch(`/api/get-file-content?fullPath=${encodeURIComponent(args.data.fullPath)}`);
     if (!res.ok) throw new Error("Failed to load file content");
@@ -133,12 +235,60 @@ export async function getProjectDetail(args: { data: { projectDir: string } }) {
     console.warn("Could not scan local project directory stats:", e);
   }
 
+  // Fallback to scanning GitHub tree stats if local files are not accessible
+  if (folderCount === 0 && project.github_url) {
+    const parsed = parseGithubUrl(project.github_url);
+    if (parsed) {
+      try {
+        const token = localStorage.getItem("github_pat");
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `token ${token}`;
+        }
+        const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/git/trees/main?recursive=1`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tree && Array.isArray(data.tree)) {
+            data.tree.forEach((item: any) => {
+              if (item.type === "tree") {
+                folderCount++;
+              } else if (item.type === "blob") {
+                fileCount++;
+                const pathLower = item.path.toLowerCase();
+                if (pathLower.includes("package.json")) {
+                  flags.react = true;
+                }
+                if (pathLower.includes("supabase/config.toml") || pathLower.includes("supabase/migrations")) {
+                  flags.supabase = true;
+                }
+                if (pathLower.includes("firebase.json") || pathLower.includes(".firebaserc")) {
+                  flags.firebase = true;
+                }
+                if (pathLower.endsWith("androidmanifest.xml") || pathLower.endsWith("build.gradle")) {
+                  detectedAndroid = true;
+                }
+                if (pathLower.includes("next.config")) {
+                  flags.next = true;
+                }
+                if (pathLower.includes("vite.config")) {
+                  flags.vite = true;
+                }
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("Could not retrieve GitHub directory tree stats:", e);
+      }
+    }
+  }
+
   // Fetch README from GitHub if local is missing and github_url is present
   if (!readmeContent && project.github_url) {
     const parsed = parseGithubUrl(project.github_url);
     if (parsed) {
       try {
-        const token = localStorage.getItem("fleet_github_token");
+        const token = localStorage.getItem("github_pat");
         const headers: Record<string, string> = {};
         if (token) {
           headers["Authorization"] = `token ${token}`;
@@ -147,7 +297,8 @@ export async function getProjectDetail(args: { data: { projectDir: string } }) {
         if (ghRes.ok) {
           const ghData = await ghRes.json();
           if (ghData.content && ghData.encoding === "base64") {
-            readmeContent = atob(ghData.content.replace(/\s/g, ""));
+            const binString = atob(ghData.content.replace(/\s/g, ""));
+            readmeContent = new TextDecoder().decode(Uint8Array.from(binString, (c) => c.charCodeAt(0)));
           }
         }
       } catch (err) {
@@ -269,20 +420,6 @@ export async function getGitHistory(args: { data: { projectDir: string } }): Pro
         console.warn("Failed to fetch commits from GitHub API:", err);
       }
     }
-  }
-
-  // Fallback to local companion Git API
-  try {
-    const res = await fetch(`/api/get-git-history`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectDir: args.data.projectDir }),
-    });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (e) {
-    console.warn("Failed to fetch local git history:", e);
   }
 
   return [
