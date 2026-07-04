@@ -66,6 +66,11 @@ function ProjectPipelinePage() {
     { id: "1", name: "powershell" }
   ]);
   const [activeTerminalId, setActiveTerminalId] = useState<string>("1");
+  const [agentMode, setAgentMode] = useState<"local" | "hosted" | "auto" >(() => {
+    const saved = localStorage.getItem("devpilot_agent_mode");
+    if (saved === "local" || saved === "hosted" || saved === "auto") return saved;
+    return "auto";
+  });
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingTabName, setEditingTabName] = useState<string>("");
   const terminalRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -164,7 +169,7 @@ function ProjectPipelinePage() {
         };
 
         ws.onerror = () => {
-          if (!hasOpened && !isFallback && hostedWsHost && hostedWsHost !== localWsHost) {
+          if (!hasOpened && !isFallback && agentMode === "auto" && hostedWsHost && hostedWsHost !== localWsHost) {
             term.write("\r\n\x1b[33m[Local Terminal Agent unavailable. Trying hosted agent...]\x1b[0m\r\n");
             isFallbackActive = true;
             ws.close();
@@ -177,14 +182,20 @@ function ProjectPipelinePage() {
         ws.onclose = (event) => {
           if (hasOpened) {
             term.write(`\r\n\x1b[31m[Terminal Agent Disconnected (Code: ${event.code})]\x1b[0m\r\n`);
-          } else if (!isFallback && hostedWsHost && hostedWsHost !== localWsHost && !isFallbackActive) {
+          } else if (!isFallback && agentMode === "auto" && hostedWsHost && hostedWsHost !== localWsHost && !isFallbackActive) {
             isFallbackActive = true;
             connect(hostedWsHost, true);
           }
         };
       };
 
-      connect(localWsHost, false);
+      if (agentMode === "hosted") {
+        connect(hostedWsHost, true);
+      } else if (agentMode === "local") {
+        connect(localWsHost, false);
+      } else {
+        connect(localWsHost, false);
+      }
 
       term.onData((data) => {
         if (currentWs && currentWs.readyState === WebSocket.OPEN) {
@@ -202,7 +213,7 @@ function ProjectPipelinePage() {
         } catch {}
       }, 50);
     }
-  }, [streamSource, terminalTabs, activeTerminalId, slug]);
+  }, [streamSource, terminalTabs, activeTerminalId, slug, agentMode]);
 
   useEffect(() => {
     if (slug) {
@@ -772,6 +783,40 @@ function ProjectPipelinePage() {
                       </div>
                     );
                   })}
+                  
+                  {/* Agent Mode Selector */}
+                  <div className="mt-auto border-t border-zinc-800 p-2.5 space-y-1.5 shrink-0 bg-zinc-900/20">
+                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider px-1">Agent Connection</div>
+                    <div className="flex flex-col gap-1">
+                      {(["auto", "local", "hosted"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => {
+                            setAgentMode(mode);
+                            localStorage.setItem("devpilot_agent_mode", mode);
+                            // Close active terminal sessions to force reconnect
+                            Object.keys(wsInstances.current).forEach((id) => {
+                              try { wsInstances.current[id].close(); } catch {}
+                            });
+                            Object.keys(xtermInstances.current).forEach((id) => {
+                              try { xtermInstances.current[id].dispose(); } catch {}
+                            });
+                            wsInstances.current = {};
+                            xtermInstances.current = {};
+                            // Re-trigger useEffect
+                            setTerminalTabs([...terminalTabs]);
+                          }}
+                          className={`text-left px-2 py-1 rounded text-[10px] font-mono capitalize transition-colors cursor-pointer ${
+                            agentMode === mode
+                              ? "bg-primary/20 text-primary font-bold border border-primary/30"
+                              : "text-zinc-500 hover:bg-zinc-800/50 hover:text-zinc-300 border border-transparent"
+                          }`}
+                        >
+                          {mode === "auto" ? "Auto (Fallback)" : mode}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
