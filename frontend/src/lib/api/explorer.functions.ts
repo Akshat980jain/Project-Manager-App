@@ -123,9 +123,15 @@ export async function getFileTree(args: { data: { projectDir: string } }): Promi
   try {
     const res = await fetch(`/api/get-file-tree?projectDir=${encodeURIComponent(args.data.projectDir)}`);
     if (!res.ok) throw new Error("Failed to load file tree");
+    
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      throw new Error("Local filesystem API is unavailable in hosted mode (requires local dev server).");
+    }
+    
     return await res.json();
   } catch (e) {
-    console.error("Error loading file tree:", e);
+    console.warn("Could not load local file tree:", (e as Error).message);
     return [];
   }
 }
@@ -168,6 +174,12 @@ export async function getFileContent(args: { data: { fullPath: string } }): Prom
   try {
     const res = await fetch(`/api/get-file-content?fullPath=${encodeURIComponent(args.data.fullPath)}`);
     if (!res.ok) throw new Error("Failed to load file content");
+    
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      throw new Error("Local filesystem API is unavailable in hosted mode (requires local dev server).");
+    }
+    
     return await res.text();
   } catch (e) {
     return `// Error loading file: ${(e as Error).message}`;
@@ -209,6 +221,10 @@ export async function getProjectDetail(args: { data: { projectDir: string } }) {
   try {
     const res = await fetch(`/api/get-file-stats?projectDir=${encodeURIComponent(args.data.projectDir)}`);
     if (res.ok) {
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        throw new Error("Local filesystem API is unavailable in hosted mode (requires local dev server).");
+      }
       const stats = await res.json();
       folderCount = stats.folderCount;
       fileCount = stats.fileCount;
@@ -232,7 +248,7 @@ export async function getProjectDetail(args: { data: { projectDir: string } }) {
       };
     }
   } catch (e) {
-    console.warn("Could not scan local project directory stats:", e);
+    console.warn("Could not scan local project directory stats:", (e as Error).message);
   }
 
   // Fallback to scanning GitHub tree stats if local files are not accessible

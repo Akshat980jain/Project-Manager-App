@@ -20,7 +20,10 @@ const MAPPED_DIRECTORIES: Record<string, string> = {
 };
 
 function resolveProjectPath(slug: string): string {
-  const parentDir = "E:\\";
+  let parentDir = "E:\\";
+  if (!fs.existsSync(parentDir)) {
+    parentDir = os.homedir() || "/";
+  }
   const lowerSlug = slug.toLowerCase();
   
   if (MAPPED_DIRECTORIES[lowerSlug]) {
@@ -58,7 +61,12 @@ console.log(`DevPilot Terminal Agent listening on ws://localhost:${PORT}`);
 wss.on("connection", (ws, req) => {
   const parsedUrl = url.parse(req.url ?? "", true);
   const projectDir = parsedUrl.query.projectDir as string || "";
-  const workingDir = projectDir ? resolveProjectPath(projectDir) : "E:\\";
+  
+  let defaultDir = "E:\\";
+  if (!fs.existsSync(defaultDir)) {
+    defaultDir = os.homedir() || "/";
+  }
+  const workingDir = projectDir ? resolveProjectPath(projectDir) : defaultDir;
   
   console.log(`Client connected for project: ${projectDir} -> resolved dir: ${workingDir}`);
   
