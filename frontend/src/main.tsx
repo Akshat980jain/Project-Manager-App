@@ -5,6 +5,26 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import "./styles.css";
 
+// Intercept API fetches to prevent HTML fallbacks in hosted environments from crashing JSON parser
+const originalFetch = window.fetch;
+window.fetch = async function (input, init) {
+  const url = typeof input === "string" 
+    ? input 
+    : input instanceof URL 
+      ? input.toString() 
+      : (input as Request).url;
+
+  if (url && (url.startsWith("/api/") || url.includes("/api/"))) {
+    const response = await originalFetch(input, init);
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("text/html")) {
+      throw new Error("Local filesystem API is unavailable in hosted mode.");
+    }
+    return response;
+  }
+  return originalFetch(input, init);
+};
+
 // Import layouts/pages
 import IndexPage from "./routes/index";
 import LoginPage from "./routes/login";
