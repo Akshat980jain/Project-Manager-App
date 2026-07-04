@@ -5,7 +5,7 @@ import fs from "fs";
 import url from "url";
 import os from "os";
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 const MAPPED_DIRECTORIES: Record<string, string> = {
   "booking-management-app": "BookEase24X7",

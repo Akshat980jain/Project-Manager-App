@@ -136,7 +136,8 @@ function ProjectPipelinePage() {
       fitAddon.fit();
       xtermInstances.current[tab.id] = term;
 
-      const wsUrl = `ws://localhost:3000/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+      const wsHost = import.meta.env.VITE_BACKEND_WS_URL || "ws://localhost:3000";
+      const wsUrl = `${wsHost}/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
       const ws = new WebSocket(wsUrl);
       wsInstances.current[tab.id] = ws;
 
