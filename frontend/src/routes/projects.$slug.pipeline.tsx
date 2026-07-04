@@ -283,6 +283,13 @@ function ProjectPipelinePage() {
           throw new Error(await response.text());
         }
 
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          setLogs(["[Console] Web service output stream idle."]);
+          setIsRunning(false);
+          return;
+        }
+
         if (!response.body) {
           throw new Error("No response body stream found.");
         }
@@ -341,6 +348,13 @@ function ProjectPipelinePage() {
         setIsRunning(true);
 
         const response = await streamBuildLogs(activeBuildId!);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          setLogs(["[Debug Console] Build pipeline stream idle."]);
+          setIsRunning(false);
+          return;
+        }
+
         if (!response.body) {
           throw new Error("No response body stream found.");
         }
@@ -508,7 +522,7 @@ function ProjectPipelinePage() {
         {/* Pipeline flowchart + Live Terminal */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: flowchart */}
-          <div className="lg:col-span-4 border border-border/40 rounded-xl bg-card/60 backdrop-blur p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] relative overflow-hidden space-y-6">
+          <div className="lg:col-span-12 border border-border/40 rounded-xl bg-card/60 backdrop-blur p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] relative overflow-hidden space-y-6">
             <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
             <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
               <Activity className="h-4.5 w-4.5 text-primary" /> Pipeline Execution Flow
@@ -574,7 +588,7 @@ function ProjectPipelinePage() {
           </div>
 
           {/* Right: Console Terminal */}
-          <div className="lg:col-span-8 border border-border/40 rounded-xl bg-[#18181b] shadow-2xl flex flex-col h-[500px] overflow-hidden text-[11px] font-sans">
+          <div className="lg:col-span-12 border border-border/40 rounded-xl bg-[#18181b] shadow-2xl flex flex-col h-[500px] overflow-hidden text-[11px] font-sans">
             <div className="flex items-center justify-between px-4 py-2 bg-[#18181b] border-b border-[#2d2d2d] select-none text-zinc-400">
               <div className="flex items-center gap-4">
                 <span className="cursor-not-allowed hover:text-zinc-500 transition-colors text-zinc-600">

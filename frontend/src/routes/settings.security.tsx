@@ -29,12 +29,19 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
+interface Webhook {
+  id: string;
+  url: string;
+  events: string;
+  status: string;
+}
+
 function SecuritySettingsPage() {
   const [apiKey, setApiKey] = useState(() => {
     return localStorage.getItem("fleet_api_key") || "de_live_9a8b7c6d5e4f3g2h1i0j_prod";
   });
   const [showKey, setShowKey] = useState(false);
-  const [webhooks, setWebhooks] = useState(() => {
+  const [webhooks, setWebhooks] = useState<Webhook[]>(() => {
     const saved = localStorage.getItem("fleet_webhooks");
     if (saved) {
       try { return JSON.parse(saved); } catch {}
