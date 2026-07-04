@@ -69,7 +69,9 @@ function ProjectPipelinePage() {
   const [agentMode, setAgentMode] = useState<"local" | "hosted" | "auto" >(() => {
     const saved = localStorage.getItem("devpilot_agent_mode");
     if (saved === "local" || saved === "hosted" || saved === "auto") return saved;
-    return "auto";
+    // Auto-detect: default to 'hosted' if on a public domain, 'auto' if on localhost
+    const isLocalHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    return isLocalHost ? "auto" : "hosted";
   });
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingTabName, setEditingTabName] = useState<string>("");
