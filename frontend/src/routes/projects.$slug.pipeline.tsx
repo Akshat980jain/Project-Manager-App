@@ -136,34 +136,59 @@ function ProjectPipelinePage() {
       fitAddon.fit();
       xtermInstances.current[tab.id] = term;
 
-      const wsHost = import.meta.env.VITE_BACKEND_WS_URL || "ws://localhost:3000";
-      const wsUrl = `${wsHost}/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
-      const ws = new WebSocket(wsUrl);
-      wsInstances.current[tab.id] = ws;
+      const localWsHost = "ws://localhost:3000";
+      const hostedWsHost = import.meta.env.VITE_BACKEND_WS_URL || "wss://devpilot-backend-keet.onrender.com";
 
-      ws.onopen = () => {
-        term.write("\r\n\x1b[32m[Connected to DevPilot Terminal Agent]\x1b[0m\r\n");
-        term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev\x1b[0m\r\n");
-        term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
-        const dims = { type: "resize", cols: term.cols, rows: term.rows };
-        ws.send(JSON.stringify(dims));
+      let currentWs: WebSocket | null = null;
+      let isFallbackActive = false;
+
+      const connect = (wsHostUrl: string, isFallback: boolean) => {
+        const wsUrl = `${wsHostUrl}/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+        const ws = new WebSocket(wsUrl);
+        currentWs = ws;
+        wsInstances.current[tab.id] = ws;
+
+        let hasOpened = false;
+
+        ws.onopen = () => {
+          hasOpened = true;
+          term.write(`\r\n\x1b[32m[Connected to DevPilot ${isFallback ? "Hosted" : "Local"} Terminal Agent]\x1b[0m\r\n`);
+          term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev\x1b[0m\r\n");
+          term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
+          const dims = { type: "resize", cols: term.cols, rows: term.rows };
+          ws.send(JSON.stringify(dims));
+        };
+
+        ws.onmessage = (event) => {
+          term.write(event.data);
+        };
+
+        ws.onerror = () => {
+          if (!hasOpened && !isFallback && hostedWsHost && hostedWsHost !== localWsHost) {
+            term.write("\r\n\x1b[33m[Local Terminal Agent unavailable. Trying hosted agent...]\x1b[0m\r\n");
+            isFallbackActive = true;
+            ws.close();
+            connect(hostedWsHost, true);
+          } else if (!hasOpened) {
+            term.write(`\r\n\x1b[31m[Error connecting to DevPilot ${isFallback ? "Hosted" : "Local"} Agent.]\x1b[0m\r\n`);
+          }
+        };
+
+        ws.onclose = (event) => {
+          if (hasOpened) {
+            term.write(`\r\n\x1b[31m[Terminal Agent Disconnected (Code: ${event.code})]\x1b[0m\r\n`);
+          } else if (!isFallback && hostedWsHost && hostedWsHost !== localWsHost && !isFallbackActive) {
+            isFallbackActive = true;
+            connect(hostedWsHost, true);
+          }
+        };
       };
 
-      ws.onmessage = (event) => {
-        term.write(event.data);
-      };
-
-      ws.onerror = () => {
-        term.write("\r\n\x1b[31m[Error connecting to local Terminal Agent on port 3000. Is it running?]\x1b[0m\r\n");
-      };
-
-      ws.onclose = () => {
-        term.write("\r\n\x1b[31m[Terminal Agent Disconnected]\x1b[0m\r\n");
-      };
+      connect(localWsHost, false);
 
       term.onData((data) => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(data);
+        if (currentWs && currentWs.readyState === WebSocket.OPEN) {
+          currentWs.send(data);
         }
       });
     });
