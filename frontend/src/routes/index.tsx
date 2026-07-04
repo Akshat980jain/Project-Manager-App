@@ -626,7 +626,7 @@ function DynamicGridDashboard() {
               <AlertTriangle className="h-5 w-5" /> Confirm Project Removal
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground mt-2">
-              Are you sure you want to remove <span className="font-bold text-foreground">{projectToDelete?.name}</span>? This action cannot be undone and will permanently delete the project record from the DevEngine Console database.
+              Are you sure you want to remove <span className="font-bold text-foreground">{projectToDelete?.name}</span>? This action cannot be undone and will permanently delete the project record from the DevPilot Console database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 gap-2">

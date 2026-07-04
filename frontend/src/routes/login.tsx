@@ -58,7 +58,7 @@ function LoginPage() {
                 ▲
               </div>
               <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-1.5">
-                Developer Fleet Console <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
+                DevPilot Console <Sparkles className="h-4 w-4 text-emerald-400 animate-pulse" />
               </h2>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Connect and manage local directories, parse gradle compile details, dynamically discover compiled APK files, and explore source code in real-time.
@@ -75,7 +75,7 @@ function LoginPage() {
                   <Terminal className="h-3 w-3" /> Console Scan Stream
                 </span>
               </div>
-              <div className="text-zinc-400">$ node devengine.js --scan-root=E:\</div>
+              <div className="text-zinc-400">$ node devpilot.js --scan-root=E:\</div>
               <div className="text-emerald-400">✓ Discovered local repository workspace</div>
               <div className="text-zinc-500">↳ Loading EduConnect, Booking App, EMS, QScan...</div>
               <div className="text-emerald-400">✓ Scanned Kotlin build.gradle.kts (Gradle 8.7 parsed)</div>

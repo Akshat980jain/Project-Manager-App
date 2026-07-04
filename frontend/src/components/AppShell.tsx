@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 </div>
                 {isGlobalDashboard && (
                   <span className="font-bold tracking-tight text-lg text-primary group-hover:opacity-80 transition-opacity">
-                    DevEngine
+                    DevPilot
                   </span>
                 )}
               </Link>

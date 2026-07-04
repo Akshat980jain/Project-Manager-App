@@ -141,7 +141,7 @@ function ProjectPipelinePage() {
       wsInstances.current[tab.id] = ws;
 
       ws.onopen = () => {
-        term.write("\r\n\x1b[32m[Connected to DevEngine Terminal Agent]\x1b[0m\r\n");
+        term.write("\r\n\x1b[32m[Connected to DevPilot Terminal Agent]\x1b[0m\r\n");
         term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev\x1b[0m\r\n");
         term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
         const dims = { type: "resize", cols: term.cols, rows: term.rows };

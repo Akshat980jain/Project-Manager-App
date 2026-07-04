@@ -53,7 +53,7 @@ function resolveProjectPath(slug: string): string {
 }
 
 const wss = new WebSocketServer({ port: PORT });
-console.log(`DevEngine Terminal Agent listening on ws://localhost:${PORT}`);
+console.log(`DevPilot Terminal Agent listening on ws://localhost:${PORT}`);
 
 wss.on("connection", (ws, req) => {
   const parsedUrl = url.parse(req.url ?? "", true);

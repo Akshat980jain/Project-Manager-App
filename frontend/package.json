@@ -1,5 +1,5 @@
 {
-  "name": "devengine_fleet_console",
+  "name": "devpilot_console",
   "private": true,
   "sideEffects": false,
   "type": "module",

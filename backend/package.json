@@ -1,7 +1,7 @@
 {
-  "name": "devengine-terminal-agent",
+  "name": "devpilot-terminal-agent",
   "version": "1.0.0",
-  "description": "Dedicated local terminal WebSocket agent for DevEngine",
+  "description": "Dedicated local terminal WebSocket agent for DevPilot",
   "main": "server.ts",
   "type": "module",
   "scripts": {
