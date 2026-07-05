@@ -7,6 +7,21 @@ import os from "os";
 
 const PORT = process.env.PORT || 3000;
 
+/**
+ * Returns the correct base directory depending on the environment:
+ * - Windows (local): E:\
+ * - Render (hosted): /project/src
+ * - Fallback: home directory
+ */
+function getBaseDir(): string {
+  // Local Windows
+  if (fs.existsSync("E:\\")) return "E:\\";
+  // Render deployment
+  if (fs.existsSync("/project/src")) return "/project/src";
+  // Fallback
+  return os.homedir() || "/";
+}
+
 const MAPPED_DIRECTORIES: Record<string, string> = {
   "booking-management-app": "BookEase24X7",
   "ytblog": "Scribe",
@@ -58,10 +73,7 @@ function findCodeRoot(projectPath: string): string {
 }
 
 function resolveProjectPath(slug: string): string {
-  let parentDir = "E:\\";
-  if (!fs.existsSync(parentDir)) {
-    parentDir = os.homedir() || "/";
-  }
+  const parentDir = getBaseDir();
   const lowerSlug = slug.toLowerCase();
   
   if (MAPPED_DIRECTORIES[lowerSlug]) {
@@ -100,10 +112,7 @@ wss.on("connection", (ws, req) => {
   const parsedUrl = url.parse(req.url ?? "", true);
   const projectDir = parsedUrl.query.projectDir as string || "";
   
-  let defaultDir = "E:\\";
-  if (!fs.existsSync(defaultDir)) {
-    defaultDir = os.homedir() || "/";
-  }
+  const defaultDir = getBaseDir();
   const workingDir = projectDir ? resolveProjectPath(projectDir) : defaultDir;
   
   console.log(`Client connected for project: ${projectDir} -> resolved dir: ${workingDir}`);
