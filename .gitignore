@@ -34,3 +34,6 @@ dist-ssr
 # Environment & large binaries
 .env
 *.apk
+
+# Claude Code (contains API keys)
+Claude code/

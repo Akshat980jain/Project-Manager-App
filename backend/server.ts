@@ -19,6 +19,44 @@ const MAPPED_DIRECTORIES: Record<string, string> = {
   "project-2026": "Project  2026"
 };
 
+/**
+ * Checks if a directory looks like a code project root by looking for
+ * common project markers (package.json, src/, frontend/, backend/).
+ */
+function isCodeRoot(dirPath: string): boolean {
+  const markers = ["package.json", "src", "frontend", "backend", "pubspec.yaml", "build.gradle"];
+  return markers.some(m => fs.existsSync(path.join(dirPath, m)));
+}
+
+/**
+ * If the resolved project directory doesn't look like a code root,
+ * drill down into subdirectories (up to 1 level) to find one.
+ * This handles projects like BookEase24X7/BMS or Pulse/Pulse Web
+ * where there's a wrapper directory before the actual code.
+ */
+function findCodeRoot(projectPath: string): string {
+  // If the directory itself looks like a code root, use it directly
+  if (isCodeRoot(projectPath)) {
+    return projectPath;
+  }
+
+  // Otherwise, check immediate subdirectories for a code root
+  try {
+    const children = fs.readdirSync(projectPath, { withFileTypes: true });
+    const subdirs = children.filter(c => c.isDirectory() && !c.name.startsWith("."));
+
+    for (const subdir of subdirs) {
+      const subPath = path.join(projectPath, subdir.name);
+      if (isCodeRoot(subPath)) {
+        return subPath;
+      }
+    }
+  } catch {}
+
+  // Fallback: return the original path
+  return projectPath;
+}
+
 function resolveProjectPath(slug: string): string {
   let parentDir = "E:\\";
   if (!fs.existsSync(parentDir)) {
@@ -29,13 +67,13 @@ function resolveProjectPath(slug: string): string {
   if (MAPPED_DIRECTORIES[lowerSlug]) {
     const mappedPath = path.join(parentDir, MAPPED_DIRECTORIES[lowerSlug]);
     if (fs.existsSync(mappedPath)) {
-      return mappedPath;
+      return findCodeRoot(mappedPath);
     }
   }
   
   const directPath = path.join(parentDir, slug);
   if (fs.existsSync(directPath)) {
-    return directPath;
+    return findCodeRoot(directPath);
   }
   
   try {
@@ -47,7 +85,7 @@ function resolveProjectPath(slug: string): string {
         .replace(/(^-|-$)/g, "");
         
       if (slugifiedItem === lowerSlug) {
-        return path.join(parentDir, item);
+        return findCodeRoot(path.join(parentDir, item));
       }
     }
   } catch {}
