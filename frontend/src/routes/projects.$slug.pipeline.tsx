@@ -21,6 +21,7 @@ import {
   type DockerImage
 } from "@/lib/api/processes";
 import { getProjectDetail } from "@/lib/api/explorer.functions";
+import { buildAgentWsUrl, getAgentConnection, clearAgentConnection } from "@/lib/terminal/agent-store";
 import { toast } from "sonner";
 import {
   Play,
@@ -79,6 +80,16 @@ function ProjectPipelinePage() {
   const xtermInstances = useRef<Record<string, XTerm>>({});
   const wsInstances = useRef<Record<string, WebSocket>>({});
 
+  const [hasStoredToken, setHasStoredToken] = useState(!!getAgentConnection());
+
+  useEffect(() => {
+    const handleChanged = () => {
+      setHasStoredToken(!!getAgentConnection());
+    };
+    window.addEventListener("agent-connection-changed", handleChanged);
+    return () => window.removeEventListener("agent-connection-changed", handleChanged);
+  }, []);
+
   const addTerminalTab = () => {
     const newId = Date.now().toString();
     setTerminalTabs([...terminalTabs, { id: newId, name: "powershell" }]);
@@ -120,6 +131,9 @@ function ProjectPipelinePage() {
     }
 
     terminalTabs.forEach((tab) => {
+      // Only initialize terminal for the active tab to prevent opening xterm on a hidden/display:none container
+      if (tab.id !== activeTerminalId) return;
+
       const container = terminalRefs.current[tab.id];
       if (!container || xtermInstances.current[tab.id]) return;
 
@@ -140,7 +154,13 @@ function ProjectPipelinePage() {
       const fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.open(container);
-      fitAddon.fit();
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        try {
+          fitAddon.fit();
+        } catch (err) {
+          console.warn("Failed to fit terminal in pipeline init:", err);
+        }
+      }
       xtermInstances.current[tab.id] = term;
 
       const localWsHost = "ws://localhost:3000";
@@ -150,7 +170,24 @@ function ProjectPipelinePage() {
       let isFallbackActive = false;
 
       const connect = (wsHostUrl: string, isFallback: boolean) => {
-        const wsUrl = `${wsHostUrl}/terminal?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+        // For local agent: use the stored token from the TerminalPanel connect flow.
+        // For hosted agent: no token needed (legacy unauthenticated path).
+        let wsUrl: string;
+        if (!isFallback) {
+          // Try to build a URL with the stored token
+          const tokenUrl = buildAgentWsUrl(slug);
+          wsUrl = tokenUrl ?? `${wsHostUrl}?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+          if (!tokenUrl) {
+            // No token stored — inform user and fall back to hosted agent
+            term.write("\r\n\x1b[33m[Local agent token not found. Open the terminal panel (`) and connect first.]\x1b[0m\r\n");
+            if (agentMode === "auto" && hostedWsHost && hostedWsHost !== localWsHost) {
+              connect(hostedWsHost, true);
+            }
+            return;
+          }
+        } else {
+          wsUrl = `${wsHostUrl}?projectDir=${encodeURIComponent(slug)}&session=${tab.id}`;
+        }
         const ws = new WebSocket(wsUrl);
         currentWs = ws;
         wsInstances.current[tab.id] = ws;
@@ -160,14 +197,32 @@ function ProjectPipelinePage() {
         ws.onopen = () => {
           hasOpened = true;
           term.write(`\r\n\x1b[32m[Connected to DevPilot ${isFallback ? "Hosted" : "Local"} Terminal Agent]\x1b[0m\r\n`);
-          term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev\x1b[0m\r\n");
-          term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
+          if (isFallback) {
+            term.write("\x1b[33mNote: You are connected to the remote Hosted Agent sandbox. Remote port forwarding is not active.\x1b[0m\r\n");
+            term.write("\x1b[33mTo run your local development servers, start the DevPilot Local Shell Agent on your machine and connect it.\x1b[0m\r\n\r\n");
+          } else {
+            term.write("\x1b[33mTo run frontend, type: cd frontend; npm run dev (make sure you ran 'npm install' in the frontend/ folder first)\x1b[0m\r\n");
+            term.write("\x1b[33mTo run backend, type: cd backend; npm start\x1b[0m\r\n\r\n");
+          }
           const dims = { type: "resize", cols: term.cols, rows: term.rows };
           ws.send(JSON.stringify(dims));
         };
 
         ws.onmessage = (event) => {
-          term.write(event.data);
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "output" && typeof msg.data === "string") {
+              term.write(msg.data);
+              return;
+            }
+            if (msg.type === "exit") {
+              term.write(`\r\n\x1b[33m[Shell exited with code ${msg.exitCode}]\x1b[0m\r\n`);
+              return;
+            }
+          } catch {
+            // Not JSON — raw string from hosted agent (backward compat)
+            term.write(event.data);
+          }
         };
 
         ws.onerror = () => {
@@ -182,7 +237,11 @@ function ProjectPipelinePage() {
         };
 
         ws.onclose = (event) => {
-          if (hasOpened) {
+          if (event.code === 4401) {
+            term.write(`\r\n\x1b[31m[Unauthorized: Invalid or expired local agent token (Code: 4401)]\x1b[0m\r\n`);
+            term.write(`\x1b[33m[Please update the token using the settings panel or the sidebar button.]\x1b[0m\r\n`);
+            clearAgentConnection();
+          } else if (hasOpened) {
             term.write(`\r\n\x1b[31m[Terminal Agent Disconnected (Code: ${event.code})]\x1b[0m\r\n`);
           } else if (!isFallback && agentMode === "auto" && hostedWsHost && hostedWsHost !== localWsHost && !isFallbackActive) {
             isFallbackActive = true;
@@ -700,7 +759,7 @@ function ProjectPipelinePage() {
             </div>
 
             {streamSource === "interactive" ? (
-              <div className="flex-1 flex overflow-hidden bg-[#121212]">
+              <div className="flex-1 flex overflow-hidden bg-[#09090b]">
                 {/* Left: Terminal Shell Screens */}
                 <div className="flex-1 p-4 overflow-hidden relative">
                   {terminalTabs.map((tab) => (
@@ -709,7 +768,7 @@ function ProjectPipelinePage() {
                       ref={(el) => {
                         terminalRefs.current[tab.id] = el;
                       }}
-                      className={tab.id === activeTerminalId ? "w-full h-full text-left bg-[#121212]" : "hidden"}
+                      className={tab.id === activeTerminalId ? "w-full h-full text-left bg-[#09090b]" : "hidden"}
                     />
                   ))}
                 </div>
@@ -818,6 +877,34 @@ function ProjectPipelinePage() {
                         </button>
                       ))}
                     </div>
+                    {agentMode === "local" && (
+                      <div className="mt-2 p-2 bg-zinc-900/40 border border-zinc-800/40 rounded-lg text-[10px] space-y-1.5 font-mono">
+                        {!hasStoredToken ? (
+                          <>
+                            <div className="text-red-400 font-bold">Local agent token is missing.</div>
+                            <button
+                              onClick={() => {
+                                window.dispatchEvent(new CustomEvent("open-terminal"));
+                                window.dispatchEvent(new CustomEvent("open-terminal-connect"));
+                              }}
+                              className="w-full text-center py-1.5 bg-red-900/20 hover:bg-red-900/40 border border-red-800/30 rounded-md text-red-300 font-bold transition-colors cursor-pointer"
+                            >
+                              Open Connect Panel
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              window.dispatchEvent(new CustomEvent("open-terminal"));
+                              window.dispatchEvent(new CustomEvent("open-terminal-connect"));
+                            }}
+                            className="w-full text-center py-1.5 bg-zinc-800/60 hover:bg-zinc-700/80 border border-zinc-700/60 rounded-md text-zinc-300 transition-colors cursor-pointer"
+                          >
+                            Update Token / Settings
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

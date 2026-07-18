@@ -13,7 +13,7 @@ export default defineConfig({
     {
       name: "fs-api",
       configureServer(server) {
-        server.middlewares.use((req, res, next) => {
+        server.middlewares.use(async (req, res, next) => {
           if (req.url && req.url.startsWith("/api/")) {
             const url = new URL(req.url, `http://${req.headers.host}`);
             const pathname = url.pathname;
@@ -103,6 +103,79 @@ export default defineConfig({
                 res.end(JSON.stringify({ error: e.message }));
               }
               return;
+            }
+
+            // ── Terminal App Command API ──────────────────────────────────
+            if (pathname.startsWith("/api/terminal/")) {
+              const segment = pathname.replace("/api/terminal/", "").split("/")[0];
+
+              // Helper: read request body as JSON
+              const readBody = (): Promise<unknown> =>
+                new Promise((resolve) => {
+                  let raw = "";
+                  req.on("data", (chunk: Buffer) => { raw += chunk.toString(); });
+                  req.on("end", () => {
+                    try { resolve(JSON.parse(raw)); }
+                    catch { resolve({}); }
+                  });
+                });
+
+              // Helper: send JSON response
+              const sendJSON = (statusCode: number, body: unknown) => {
+                res.setHeader("Content-Type", "application/json");
+                res.statusCode = statusCode;
+                res.end(JSON.stringify(body));
+              };
+
+              const authHeader = req.headers["authorization"] as string | undefined;
+
+              try {
+                if (segment === "status" && req.method === "GET") {
+                  const { statusFn } = await import("./src/server/terminal/commands.server.js");
+                  const result = await statusFn(authHeader);
+                  return sendJSON(200, result);
+                }
+
+                if (segment === "deploy" && req.method === "POST") {
+                  const body = await readBody();
+                  const { deployFn } = await import("./src/server/terminal/commands.server.js");
+                  const result = await deployFn(authHeader, body);
+                  return sendJSON(200, result);
+                }
+
+                if (segment === "rollback" && req.method === "POST") {
+                  const body = await readBody();
+                  const { rollbackFn } = await import("./src/server/terminal/commands.server.js");
+                  const result = await rollbackFn(authHeader, body);
+                  return sendJSON(200, result);
+                }
+
+                if (segment === "incident" && req.method === "POST") {
+                  const body = await readBody();
+                  const { incidentFn } = await import("./src/server/terminal/commands.server.js");
+                  const result = await incidentFn(authHeader, body);
+                  return sendJSON(200, result);
+                }
+
+                if (segment === "help" && req.method === "GET") {
+                  const cmdParam = url.searchParams.get("command") ?? undefined;
+                  const { helpFn } = await import("./src/server/terminal/commands.server.js");
+                  const result = await helpFn(authHeader, cmdParam);
+                  return sendJSON(200, result);
+                }
+
+                if (segment === "logs-stream" && req.method === "GET") {
+                  const { logsStreamHandler } = await import("./src/server/terminal/logs-stream.server.js");
+                  await logsStreamHandler(req as any, res as any);
+                  return;
+                }
+              } catch (err: any) {
+                console.error("[terminal middleware]", err);
+                return sendJSON(500, { lines: [{ text: `Server error: ${err.message}`, color: "red" }] });
+              }
+
+              // Unknown terminal sub-route
+              return sendJSON(404, { lines: [{ text: `Unknown terminal command: ${segment}`, color: "red" }] });
             }
           }
           next();

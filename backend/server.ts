@@ -1,24 +1,40 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import * as pty from "node-pty";
 import path from "path";
 import fs from "fs";
 import url from "url";
 import os from "os";
+import crypto from "crypto";
 
-const PORT = process.env.PORT || 3000;
+// ─────────────────────────────────────────────────────────────────────────────
+// Security: per-run random auth token
+// ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Returns the correct base directory depending on the environment:
- * - Windows (local): E:\
- * - Render (hosted): /project/src
- * - Fallback: home directory
- */
+const AUTH_TOKEN = crypto.randomBytes(16).toString("hex");
+
+// IMPORTANT: this is the only time the token is printed — never logged to a file.
+console.log("┌─────────────────────────────────────────────────────────┐");
+console.log("│            DevPilot Local Shell Agent                  │");
+console.log("│                                                         │");
+console.log(`│  Token: ${AUTH_TOKEN}  │`);
+console.log("│                                                         │");
+console.log("│  Paste this token in DevPilot → Terminal → Connect     │");
+console.log("│  Binds to 127.0.0.1 only — not reachable externally    │");
+console.log("└─────────────────────────────────────────────────────────┘");
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Config
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PORT = parseInt(process.env.AGENT_PORT || process.env.PORT || "3000", 10);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Directory resolution (unchanged from original)
+// ─────────────────────────────────────────────────────────────────────────────
+
 function getBaseDir(): string {
-  // Local Windows
   if (fs.existsSync("E:\\")) return "E:\\";
-  // Render deployment
   if (fs.existsSync("/project/src")) return "/project/src";
-  // Fallback
   return os.homedir() || "/";
 }
 
@@ -31,63 +47,38 @@ const MAPPED_DIRECTORIES: Record<string, string> = {
   "ems": "StaffSphere",
   "upload-app": "GallaryHub",
   "pulse-app": "Pulse",
-  "project-2026": "Project  2026"
+  "project-2026": "Project  2026",
 };
 
-/**
- * Checks if a directory looks like a code project root by looking for
- * common project markers (package.json, src/, frontend/, backend/).
- */
 function isCodeRoot(dirPath: string): boolean {
   const markers = ["package.json", "src", "frontend", "backend", "pubspec.yaml", "build.gradle"];
-  return markers.some(m => fs.existsSync(path.join(dirPath, m)));
+  return markers.some((m) => fs.existsSync(path.join(dirPath, m)));
 }
 
-/**
- * If the resolved project directory doesn't look like a code root,
- * drill down into subdirectories (up to 1 level) to find one.
- * This handles projects like BookEase24X7/BMS or Pulse/Pulse Web
- * where there's a wrapper directory before the actual code.
- */
 function findCodeRoot(projectPath: string): string {
-  // If the directory itself looks like a code root, use it directly
-  if (isCodeRoot(projectPath)) {
-    return projectPath;
-  }
-
-  // Otherwise, check immediate subdirectories for a code root
+  if (isCodeRoot(projectPath)) return projectPath;
   try {
     const children = fs.readdirSync(projectPath, { withFileTypes: true });
-    const subdirs = children.filter(c => c.isDirectory() && !c.name.startsWith("."));
-
-    for (const subdir of subdirs) {
+    for (const subdir of children.filter((c) => c.isDirectory() && !c.name.startsWith("."))) {
       const subPath = path.join(projectPath, subdir.name);
-      if (isCodeRoot(subPath)) {
-        return subPath;
-      }
+      if (isCodeRoot(subPath)) return subPath;
     }
   } catch {}
-
-  // Fallback: return the original path
   return projectPath;
 }
 
 function resolveProjectPath(slug: string): string {
   const parentDir = getBaseDir();
   const lowerSlug = slug.toLowerCase();
-  
+
   if (MAPPED_DIRECTORIES[lowerSlug]) {
     const mappedPath = path.join(parentDir, MAPPED_DIRECTORIES[lowerSlug]);
-    if (fs.existsSync(mappedPath)) {
-      return findCodeRoot(mappedPath);
-    }
+    if (fs.existsSync(mappedPath)) return findCodeRoot(mappedPath);
   }
-  
+
   const directPath = path.join(parentDir, slug);
-  if (fs.existsSync(directPath)) {
-    return findCodeRoot(directPath);
-  }
-  
+  if (fs.existsSync(directPath)) return findCodeRoot(directPath);
+
   try {
     const items = fs.readdirSync(parentDir);
     for (const item of items) {
@@ -95,31 +86,49 @@ function resolveProjectPath(slug: string): string {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
-        
       if (slugifiedItem === lowerSlug) {
         return findCodeRoot(path.join(parentDir, item));
       }
     }
   } catch {}
-  
+
   return parentDir;
 }
 
-const wss = new WebSocketServer({ port: PORT });
-console.log(`DevPilot Terminal Agent listening on ws://localhost:${PORT}`);
+// ─────────────────────────────────────────────────────────────────────────────
+// WebSocket Server — bound EXCLUSIVELY to 127.0.0.1
+// ─────────────────────────────────────────────────────────────────────────────
 
-wss.on("connection", (ws, req) => {
+const wss = new WebSocketServer({
+  port: PORT,
+  host: "127.0.0.1", // ← Security: never bind to 0.0.0.0
+});
+
+console.log(`\nListening on ws://127.0.0.1:${PORT}`);
+console.log("Waiting for DevPilot connection...\n");
+
+wss.on("connection", (ws: WebSocket, req) => {
   const parsedUrl = url.parse(req.url ?? "", true);
+
+  // ── Token verification ──────────────────────────────────────────────────
+  const suppliedToken = parsedUrl.query.token as string | undefined;
+  if (!suppliedToken || suppliedToken !== AUTH_TOKEN) {
+    console.warn(`[security] Rejected connection — invalid or missing token from ${req.socket.remoteAddress}`);
+    ws.close(4401, "Unauthorized: invalid token");
+    return;
+  }
+
+  // ── Resolve working directory ────────────────────────────────────────────
   const projectDir = parsedUrl.query.projectDir as string || "";
-  
   const defaultDir = getBaseDir();
   const workingDir = projectDir ? resolveProjectPath(projectDir) : defaultDir;
-  
-  console.log(`Client connected for project: ${projectDir} -> resolved dir: ${workingDir}`);
-  
+
+  console.log(`[connection] Accepted for project: "${projectDir}" → ${workingDir}`);
+
+  // ── Spawn PTY ────────────────────────────────────────────────────────────
   const isWin = os.platform() === "win32";
-  const shell = isWin ? "powershell.exe" : "bash";
-  
+  const shell = isWin ? "powershell.exe" : (process.env.SHELL ?? "bash");
+
   let ptyProcess: pty.IPty;
   try {
     ptyProcess = pty.spawn(shell, [], {
@@ -127,48 +136,55 @@ wss.on("connection", (ws, req) => {
       cols: 80,
       rows: 24,
       cwd: workingDir,
-      env: { ...process.env, FORCE_COLOR: "1" }
+      env: { ...process.env, FORCE_COLOR: "1" },
     });
   } catch (err: any) {
-    console.error("Failed to spawn shell process:", err);
+    console.error("[pty] Failed to spawn shell:", err.message);
     ws.close(1011, `Failed to spawn shell: ${err.message}`);
     return;
   }
-  
-  // Stream data from PTY process to WebSocket client
+
+  // ── PTY → Client ─────────────────────────────────────────────────────────
   ptyProcess.onData((data) => {
-    ws.send(data);
-  });
-  
-  // Handle PTY process exit
-  ptyProcess.onExit(({ exitCode }) => {
-    console.log(`Shell process exited with code ${exitCode}`);
     try {
-      ws.send(`\r\n[Shell exited with code ${exitCode}]\r\n`);
+      ws.send(JSON.stringify({ type: "output", data }));
+    } catch {}
+  });
+
+  ptyProcess.onExit(({ exitCode }) => {
+    console.log(`[pty] Shell exited with code ${exitCode}`);
+    try {
+      ws.send(JSON.stringify({ type: "exit", exitCode }));
       ws.close();
     } catch {}
   });
-  
-  // Handle inputs from WebSocket client to PTY process
+
+  // ── Client → PTY ─────────────────────────────────────────────────────────
   ws.on("message", (message) => {
     const dataStr = message.toString();
     try {
-      // Check if it's a resize command
       const parsed = JSON.parse(dataStr);
+
+      if (parsed.type === "input" && typeof parsed.data === "string") {
+        ptyProcess.write(parsed.data);
+        return;
+      }
+
       if (parsed.type === "resize") {
-        const cols = parsed.cols || 80;
-        const rows = parsed.rows || 24;
+        const cols = Math.max(1, parseInt(parsed.cols, 10) || 80);
+        const rows = Math.max(1, parseInt(parsed.rows, 10) || 24);
         ptyProcess.resize(cols, rows);
         return;
       }
-    } catch {}
-    
-    // Write keystrokes directly to the PTY process
-    ptyProcess.write(dataStr);
+    } catch {
+      // Fallback: treat raw string as direct PTY input (backward compat)
+      ptyProcess.write(dataStr);
+    }
   });
-  
+
+  // ── Cleanup on disconnect ────────────────────────────────────────────────
   ws.on("close", () => {
-    console.log("WebSocket client disconnected, killing PTY process...");
+    console.log("[connection] Client disconnected — killing PTY process");
     try {
       ptyProcess.kill();
     } catch {}

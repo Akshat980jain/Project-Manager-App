@@ -6,21 +6,44 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/CommandPalette";
-import { Search } from "lucide-react";
+import { Search, Terminal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { TerminalPanel } from "@/components/TerminalPanel";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const pathname = location.pathname;
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
-  // Bind keydown listeners for Ctrl+K / Cmd+K
+  // Bind custom event listener to open terminal
+  useEffect(() => {
+    const handleOpen = () => setTerminalOpen(true);
+    window.addEventListener("open-terminal", handleOpen);
+    return () => window.removeEventListener("open-terminal", handleOpen);
+  }, []);
+
+  // Bind keydown listeners for Ctrl+K / Cmd+K and backtick
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setPaletteOpen((open) => !open);
+      }
+      // Backtick (`) toggles the terminal panel
+      // Ignore when typing inside an input / textarea / contenteditable
+      if (
+        e.key === "`" &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement) &&
+        !(e.target instanceof HTMLElement && e.target.isContentEditable)
+      ) {
+        e.preventDefault();
+        setTerminalOpen((open) => !open);
       }
     };
     document.addEventListener("keydown", down);
@@ -94,6 +117,16 @@ export function AppShell({ children }: { children: ReactNode }) {
 
               {user && <NotificationsBell />}
 
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTerminalOpen((open) => !open)}
+                className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg"
+                title="Toggle Terminal Panel (`)"
+              >
+                <Terminal className="h-4.5 w-4.5" />
+              </Button>
+
               {user ? (
                 <Avatar className="h-8 w-8 border border-border/40 cursor-pointer hover:opacity-85 transition-opacity">
                   <AvatarImage src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ5qAlpvGDLvytv4q2c2uvvWQNOCNAFBOzKztRwpMcFbL5miJi5lBambbJTXhAMxydQxCxYMvVN5UB9-vvEzA1b89F7dO6fziiqBYSJaaZ17C4iHG6QfVgwiLuyqjq_vPq3QAAtqQ-mFNI5EbNNG9RhMuRzXByWwupbRL543pgWC8l0ZGa_qEt4Vr2_8DetI04tJvcpw9pFpWrAj5zVKfMWllqud0amxc1Fs5pao_SMX81rntFTXkSDm00iRP0PwOlMPbDVbsotIU" />
@@ -113,6 +146,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Global Command Palette */}
       <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+
+      {/* Global Terminal Panel (backtick to toggle) */}
+      <TerminalPanel
+        open={terminalOpen}
+        onClose={() => setTerminalOpen(false)}
+        userId={user?.id ?? "anonymous"}
+      />
     </SidebarProvider>
   );
 }
