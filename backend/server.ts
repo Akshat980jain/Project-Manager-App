@@ -114,7 +114,9 @@ wss.on("connection", (ws: WebSocket, req) => {
 
   // ── Token verification ──────────────────────────────────────────────────
   const suppliedToken = parsedUrl.query.token as string | undefined;
-  if (!suppliedToken || suppliedToken !== AUTH_TOKEN) {
+  const skipAuth = process.env.NO_AUTH === "true";
+
+  if (!skipAuth && (!suppliedToken || suppliedToken !== AUTH_TOKEN)) {
     console.warn(`[security] Rejected connection — invalid or missing token from ${req.socket.remoteAddress}`);
     ws.close(4401, "Unauthorized: invalid token");
     return;
