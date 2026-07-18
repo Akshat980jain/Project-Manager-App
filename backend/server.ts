@@ -12,14 +12,16 @@ import crypto from "crypto";
 
 const AUTH_TOKEN = crypto.randomBytes(16).toString("hex");
 
+const HOST = process.env.HOST || (process.env.RENDER === "true" ? "0.0.0.0" : "127.0.0.1");
+
 // IMPORTANT: this is the only time the token is printed — never logged to a file.
 console.log("┌─────────────────────────────────────────────────────────┐");
-console.log("│            DevPilot Local Shell Agent                  │");
+console.log("│            DevPilot Shell Agent                        │");
 console.log("│                                                         │");
 console.log(`│  Token: ${AUTH_TOKEN}  │`);
 console.log("│                                                         │");
 console.log("│  Paste this token in DevPilot → Terminal → Connect     │");
-console.log("│  Binds to 127.0.0.1 only — not reachable externally    │");
+console.log(`│  Binds to ${HOST}                                       │`);
 console.log("└─────────────────────────────────────────────────────────┘");
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -101,10 +103,10 @@ function resolveProjectPath(slug: string): string {
 
 const wss = new WebSocketServer({
   port: PORT,
-  host: "127.0.0.1", // ← Security: never bind to 0.0.0.0
+  host: HOST,
 });
 
-console.log(`\nListening on ws://127.0.0.1:${PORT}`);
+console.log(`\nListening on ws://${HOST}:${PORT}`);
 console.log("Waiting for DevPilot connection...\n");
 
 wss.on("connection", (ws: WebSocket, req) => {
